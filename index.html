@@ -5,160 +5,241 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manish Paudel | Portfolio</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
+    <!-- ============ NAVBAR ============ -->
     <header>
         <nav class="navbar">
-            
             <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle navigation Menu">
                 <i class="fa-solid fa-bars"></i>
             </button>
-
-            <div class="logo">Manish <span>Paudel</span></div>
-            
-            <div class="nav-controls-mobile">
-                <i class="fa-solid fa-sun switch-label-icon sun"></i>
-                <button id="theme-toggle-mobile" class="custom-switch-btn" aria-label="Toggle dark mode">
-                    <span class="switch-knob"></span>
-                </button>
-                <i class="fa-solid fa-moon switch-label-icon moon"></i>
-            </div>
-
+            <div class="logo">Manish<span> Paudel</span></div>
             <ul class="nav-links" id="nav-menu">
-                <li><a href="#hero" class="nav-item">Home</a></li>
-                <li><a href="#about" class="nav-item">About</a></li>
+                <li><a href="#hero"      class="nav-item">Home</a></li>
+                <li><a href="#about"     class="nav-item">About</a></li>
                 <li><a href="#education" class="nav-item">Education</a></li>
-                <li><a href="#contact" class="nav-item">Contact</a></li>
-                
-                <li class="pc-theme-li">
-                    <div class="switch-wrapper-pc">
-                        <i class="fa-solid fa-sun switch-label-icon sun"></i>
-                        <button id="theme-toggle" class="custom-switch-btn" aria-label="Toggle dark mode">
-                            <span class="switch-knob"></span>
-                        </button>
-                        <i class="fa-solid fa-moon switch-label-icon moon"></i>
-                    </div>
-                </li>
+                <li><a href="#contact"   class="nav-item">Contact</a></li>
             </ul>
+            <div class="nav-right">
+                <button id="theme-toggle" class="theme-btn" aria-label="Toggle dark mode">
+                    <i class="fa-solid fa-moon icon-moon"></i>
+                    <i class="fa-solid fa-sun icon-sun"></i>
+                </button>
+            </div>
         </nav>
     </header>
 
+    <!-- ============ HERO ============ -->
     <section id="hero" class="hero-section">
+        <!-- Decorative blobs (CSS-only, no JS cost) -->
+        <div class="blob blob-1" aria-hidden="true"></div>
+        <div class="blob blob-2" aria-hidden="true"></div>
+        <div class="blob blob-3" aria-hidden="true"></div>
+
         <div class="hero-container">
             <div class="hero-text pop-up">
-                <h1>Hi, I'm <span class="highlight">Manish Paudel</span></h1>
-                <p>BBA Student & Aspiring Professional</p>
-                <a href="game.html" class="btn">Play game</a>
+                <p class="hero-eyebrow">Hello, world 👋</p>
+                <h1>I'm <span class="highlight">Manish<br>Paudel</span></h1>
+                <p class="hero-sub">BBA Student &amp; Aspiring Business Professional</p>
+                <div class="hero-cta-row">
+                    <a href="#contact" class="btn btn-primary">Get In Touch</a>
+                    <a href="game.html" class="btn btn-ghost">
+                        <i class="fa-solid fa-gamepad"></i> Play My Game
+                    </a>
+                </div>
             </div>
-        <div class="floating-box">
-            <div class="glow"></div>
-                <div class="hero-image pop-up">
-                    <img src="manish.jpeg" alt="Manish Paudel" class="profile-pic">
+            <div class="hero-image-wrap pop-up">
+                <div class="avatar-ring"></div>
+                <div class="avatar-glow" aria-hidden="true"></div>
+                <img src="manish.jpeg" alt="Manish Paudel" class="profile-pic">
+                <div class="status-badge">
+                    <span class="status-dot"></span> Open to Internships
+                </div>
             </div>
         </div>
-    </div>
-    </section>
 
-    <section id="about" class="about-section text-center">
-        <div class="container pop-up">
-            <h2>About Me</h2>
-            <div class="heading-line"></div>
-            <p>I am a driven and detail-oriented individual currently pursuing my Bachelor of Business Administration (BBA) degree at Mahakavi Devkota Campus. With a solid academic foundation, I am passionate about business management, marketing strategy, and modern corporate leadership frameworks.</p>
+        <div class="scroll-hint" aria-hidden="true">
+            <span></span>
         </div>
     </section>
 
+    <!-- ============ ABOUT ============ -->
+    <section id="about" class="about-section">
+        <div class="container">
+            <div class="section-header pop-up">
+                <span class="section-tag">Who I am</span>
+                <h2>About Me</h2>
+                <div class="heading-line"></div>
+            </div>
+            <div class="about-grid pop-up">
+                <div class="about-text">
+                    <p>I am a driven and detail-oriented individual currently pursuing my <strong>Bachelor of Business Administration (BBA)</strong> degree at Mahakavi Devkota Campus.</p>
+                    <p>Passionate about business management, marketing strategy, and modern corporate leadership, I'm always looking for opportunities to grow and make an impact.</p>
+                </div>
+                <div class="about-cards">
+                    <div class="skill-card">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Business Strategy</span>
+                    </div>
+                    <div class="skill-card">
+                        <i class="fa-solid fa-bullhorn"></i>
+                        <span>Marketing</span>
+                    </div>
+                    <div class="skill-card">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Leadership</span>
+                    </div>
+                    <div class="skill-card">
+                        <i class="fa-solid fa-laptop-code"></i>
+                        <span>Digital Skills</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ EDUCATION ============ -->
     <section id="education" class="education-section">
         <div class="container">
-            <h2 class="text-center pop-up">My Education</h2>
-            <div class="heading-line pop-up"></div>
-            
+            <div class="section-header pop-up text-center">
+                <span class="section-tag">My Journey</span>
+                <h2>Education</h2>
+                <div class="heading-line mx-auto"></div>
+            </div>
+
             <div class="screenshot-timeline">
                 <div class="timeline-line"></div>
 
                 <div class="timeline-item right pop-up">
-                    <div class="timeline-dot"></div>
+                    <div class="timeline-dot"><i class="fa-solid fa-graduation-cap"></i></div>
                     <div class="timeline-content-card">
-                        <h3>Bachelor of Business Administration (BBA)</h3>
-                        <p class="institute">Mahakavi Devkota Campus, Sunwal, Nepal</p>
-                        <p class="status-date">Currently Pursuing</p>
-                        <p class="desc">Focusing on core management principles, financial strategies, marketing dynamics, and corporate leadership skills essential for today's global business landscape.</p>
+                        <span class="edu-badge current">Ongoing</span>
+                        <h3>Bachelor of Business Administration</h3>
+                        <p class="institute"><i class="fa-solid fa-building-columns"></i> Mahakavi Devkota Campus, Sunwal</p>
+                        <p class="desc">Focusing on core management principles, financial strategies, marketing dynamics, and corporate leadership skills for today's global landscape.</p>
                     </div>
                 </div>
 
                 <div class="timeline-item left pop-up">
-                    <div class="timeline-dot"></div>
+                    <div class="timeline-dot"><i class="fa-solid fa-book"></i></div>
                     <div class="timeline-content-card">
+                        <span class="edu-badge done">Completed</span>
                         <h3>+2 Management</h3>
-                        <p class="institute">Kalika Manavgyan Secondary School</p>
-                        <p class="status-date">Completed</p>
-                        <p class="desc">Successfully completed higher secondary education, establishing analytical thinking skills and a strong academic baseline for university studies.</p>
+                        <p class="institute"><i class="fa-solid fa-building-columns"></i> Kalika Manavgyan Secondary School</p>
+                        <p class="desc">Completed higher secondary education, building analytical thinking and a strong academic baseline for university studies.</p>
                     </div>
                 </div>
 
                 <div class="timeline-item right pop-up">
-                    <div class="timeline-dot"></div>
+                    <div class="timeline-dot"><i class="fa-solid fa-school"></i></div>
                     <div class="timeline-content-card">
-                        <h3>School Education (SEE/SLC)</h3>
-                        <p class="institute">Lumbini Secondary School</p>
-                        <p class="status-date">10th Grade Passed</p>
-                        <p class="desc">Finished foundational schooling with a focus on fundamental sciences, mathematics, and language proficiency.</p>
+                        <span class="edu-badge done">Passed</span>
+                        <h3>School Education (SEE)</h3>
+                        <p class="institute"><i class="fa-solid fa-building-columns"></i> Lumbini Secondary School</p>
+                        <p class="desc">Foundational schooling with focus on sciences, mathematics, and language proficiency.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
+    <!-- ============ CONTACT ============ -->
     <section id="contact" class="contact-section">
         <div class="container">
-            <h2 class="text-center pop-up">Contact Me</h2>
-            <div class="heading-line pop-up"></div>
-            
+            <div class="section-header pop-up text-center">
+                <span class="section-tag">Say Hello</span>
+                <h2>Contact Me</h2>
+                <div class="heading-line mx-auto"></div>
+            </div>
+
             <div class="contact-container">
                 <div class="contact-info pop-up">
                     <h3>Let's Connect</h3>
                     <p>Feel free to reach out for internship opportunities, project collaborations, or just a professional chat!</p>
-                    
+
                     <a href="tel:+9779766792779" class="info-item-link">
                         <div class="info-item">
-                            <i class="fa-solid fa-phone"></i>
-                            <span>+977 9766792779</span>
+                            <div class="info-icon"><i class="fa-solid fa-phone"></i></div>
+                            <div>
+                                <small>Phone</small>
+                                <span>+977 9766792779</span>
+                            </div>
                         </div>
                     </a>
 
                     <a href="mailto:manishpaudel86@gmail.com" class="info-item-link">
                         <div class="info-item">
-                            <i class="fa-solid fa-envelope"></i>
-                            <span>manishpaudel86@gmail.com</span>
+                            <div class="info-icon"><i class="fa-solid fa-envelope"></i></div>
+                            <div>
+                                <small>Email</small>
+                                <span>manishpaudel86@gmail.com</span>
+                            </div>
                         </div>
                     </a>
 
-                    <a href="https://maps.google.com" target="_blank" class="info-item-link">
+                    <a href="https://maps.google.com/?q=Sunwal,Nepal" target="_blank" class="info-item-link">
                         <div class="info-item">
-                            <i class="fa-solid fa-location-dot"></i>
-                            <span>Sunwal, Nepal</span>
+                            <div class="info-icon"><i class="fa-solid fa-location-dot"></i></div>
+                            <div>
+                                <small>Location</small>
+                                <span>Sunwal, Nepal</span>
+                            </div>
                         </div>
                     </a>
 
                     <div class="socials">
-                        <a href="https://www.facebook.com/Paudel.Maniesh.728?rdid=DaDuUuYW0V916UXG&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F18ASvov1TF%2F"><i class="fa-brands fa-facebook"></i></a>
-                        <a href="https://www.instagram.com/maniesh_paudel?igsh=MThoaHVmcm05dXhycg%3D%3D"><i class="fa-brands fa-instagram"></i></a>
-                        <a href="https://github.com/manishpaudel-hub"><i class="fa-brands fa-github"></i></a>
+                        <a href="https://www.facebook.com/Paudel.Maniesh.728" aria-label="Facebook" target="_blank"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="https://www.instagram.com/maniesh_paudel" aria-label="Instagram" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="https://github.com/manishpaudel-hub" aria-label="GitHub" target="_blank"><i class="fa-brands fa-github"></i></a>
                     </div>
                 </div>
 
-                <form class="contact-form pop-up" onsubmit="event.preventDefault();">
+                <!-- 
+                    ========================================================
+                    HOW TO CONNECT THIS FORM TO RECEIVE EMAILS
+                    ========================================================
+                    Option A - Formspree (easiest, FREE):
+                    1. Go to https://formspree.io and sign up
+                    2. Create a new form, copy your form endpoint URL
+                    3. Replace action="YOUR_FORMSPREE_URL" below with it
+                    4. That's it! Submissions arrive in your email.
+
+                    Option B - EmailJS (free, no backend needed):
+                    1. Go to https://www.emailjs.com and sign up
+                    2. Connect your Gmail, create a template
+                    3. Use their JS SDK to send on submit (see script.js)
+
+                    Option C - Netlify Forms (if you host on Netlify, FREE):
+                    1. Host site on https://netlify.com (drag-and-drop deploy!)
+                    2. Add netlify attribute to your form tag: <form netlify>
+                    3. Netlify auto-captures all submissions in their dashboard
+                    ========================================================
+                -->
+                <form class="contact-form pop-up" id="contact-form"
+                      action="https://formspree.io/f/YOUR_FORM_ID"
+                      method="POST">
                     <div class="form-group">
-                        <input type="text" placeholder="Your Name" required>
+                        <label for="name">Your Name</label>
+                        <input type="text" id="name" name="name" placeholder="Manish Paudel" required>
                     </div>
                     <div class="form-group">
-                        <input type="email" placeholder="Your Email" required>
+                        <label for="email">Your Email</label>
+                        <input type="email" id="email" name="email" placeholder="hello@example.com" required>
                     </div>
                     <div class="form-group">
-                        <textarea rows="5" placeholder="Your Message" required></textarea>
+                        <label for="message">Your Message</label>
+                        <textarea id="message" name="message" rows="5" placeholder="Let's talk about..." required></textarea>
                     </div>
-                    <button type="submit" class="btn block">Send Message</button>
+                    <button type="submit" class="btn btn-primary block" id="submit-btn">
+                        <span class="btn-text">Send Message <i class="fa-solid fa-paper-plane"></i></span>
+                        <span class="btn-loading hidden"><i class="fa-solid fa-spinner fa-spin"></i> Sending…</span>
+                    </button>
+                    <p class="form-status" id="form-status" aria-live="polite"></p>
                 </form>
             </div>
         </div>
@@ -167,6 +248,7 @@
     <footer>
         <div class="footer-content text-center">
             <p>© 2026 Manish Paudel. All Rights Reserved.</p>
+            <a href="#hero" class="back-top" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></a>
         </div>
     </footer>
 

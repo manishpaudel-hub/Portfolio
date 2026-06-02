@@ -2,264 +2,350 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
-    <title>Responsive Neon Flappy Bird</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bird Odyssey | Manish Paudel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        /* ── Design tokens matching portfolio ── */
         :root {
-            --bg-color: #f0f4f8;
-            --container-bg: #ffffff;
-            --text-color: #1a202c;
-            --accent-color: #3b82f6;
-            --panel-bg: #f8fafc;
-            --border-color: #e2e8f0;
-            --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            --c-bg:      #f7f5f2;
+            --c-surface: #ffffff;
+            --c-text:    #1c1917;
+            --c-muted:   #78716c;
+            --c-accent:  #1d4ed8;
+            --c-border:  rgba(0,0,0,.08);
+            --font-display: 'Playfair Display', Georgia, serif;
+            --font-body:    'DM Sans', sans-serif;
         }
-
         [data-theme="dark"] {
-            --bg-color: #0f172a;
-            --container-bg: #1e293b;
-            --text-color: #f8fafc;
-            --accent-color: #38bdf8;
-            --panel-bg: #334155;
-            --border-color: #475569;
-            --shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            --c-bg:      #0f0f0f;
+            --c-surface: #181818;
+            --c-text:    #f5f5f4;
+            --c-muted:   #a8a29e;
+            --c-accent:  #38bdf8;
+            --c-border:  rgba(255,255,255,.07);
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            transition: background-color 0.2s, color 0.2s;
-            user-select: none;
-            -webkit-user-select: none;
-        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-user-select:none; }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            font-family: var(--font-body);
+            background: var(--c-bg);
+            color: var(--c-text);
             display: flex;
             flex-direction: column;
+            height: 100svh;
             overflow: hidden;
             touch-action: none;
+            -webkit-font-smoothing: antialiased;
+            transition: background .25s, color .25s;
         }
 
-        /* Responsive Header Adjustments */
-        .header-controls {
+        /* ── Top bar ── */
+        .topbar {
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 10px 15px;
-            z-index: 30; /* Kept high for visual layout */
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(5px);
-            border-bottom: 1px solid var(--border-color);
+            padding: 10px 18px;
+            border-bottom: 1px solid var(--c-border);
+            background: var(--c-surface);
+            flex-shrink: 0;
+            gap: 12px;
+            z-index: 10;
         }
 
-        .theme-switch-wrapper {
+        .topbar-logo {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: var(--c-text);
+            text-decoration: none;
+        }
+        .topbar-logo span { color: var(--c-accent); }
+
+        .topbar-controls {
             display: flex;
             align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
+            gap: 10px;
         }
 
-        .theme-switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 28px;
-        }
-
-        .theme-switch input { opacity: 0; width: 0; height: 0; }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #cbd5e1;
-            transition: .3s;
-            border-radius: 28px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 22px;
-            width: 22px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .3s;
+        .icon-btn {
+            width: 36px; height: 36px;
             border-radius: 50%;
-        }
-
-        input:checked + .slider { background-color: var(--accent-color); }
-        input:checked + .slider:before { transform: translateX(22px); }
-
-        .btn {
-            background-color: var(--container-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            padding: 6px 12px;
-            border-radius: 6px;
+            border: 1px solid var(--c-border);
+            background: var(--c-bg);
+            color: var(--c-text);
+            font-size: .9rem;
+            display: flex; align-items: center; justify-content: center;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85rem;
-            box-shadow: var(--shadow);
+            transition: background .2s, transform .2s;
         }
+        .icon-btn:hover { background: var(--c-accent); color: #fff; }
 
-        /* Flexible Game Canvas Wrapper */
+        .settings-btn {
+            display: flex; align-items: center; gap: 6px;
+            padding: 7px 14px;
+            border-radius: 100px;
+            border: 1px solid var(--c-border);
+            background: var(--c-bg);
+            color: var(--c-text);
+            font-size: .82rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: var(--font-body);
+            transition: background .2s, color .2s;
+            white-space: nowrap;
+        }
+        .settings-btn:hover { background: var(--c-accent); color: #fff; border-color: var(--c-accent); }
+
+        /* ── Game viewport ── */
         .game-viewport {
             flex: 1;
             position: relative;
-            width: 100%;
-            height: 100%;
             overflow: hidden;
             display: flex;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
         }
 
         canvas {
             display: block;
-            max-width: 100%;
-            max-height: 100%;
-            background: var(--container-bg);
-        }
-
-        /* Interface overlays */
-        .overlay {
+            /* Always fills the viewport perfectly */
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(3px);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            z-index: 10;
-            padding: 20px;
-            pointer-events: none; /* Crucial: Allows clicks/taps to pass through directly to our global listener */
-        }
-
-        /* Allows select drops and apply buttons to continue working over the invisible layout pass */
-        .interactive-panel {
-            pointer-events: auto !important;
-        }
-
-        .hidden { display: none !important; }
-
-        .panel {
-            background: var(--container-bg);
-            color: var(--text-color);
-            padding: 20px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 320px;
-            border: 1px solid var(--border-color);
-        }
-
-        .panel h2 { margin-bottom: 15px; font-size: 1.25rem; text-align: center;}
-
-        .setting-group { margin-bottom: 12px; }
-        .setting-group label {
-            display: block;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-bottom: 4px;
-            opacity: 0.8;
-        }
-
-        .setting-group select {
+            top: 0; left: 0;
             width: 100%;
-            padding: 8px;
-            border-radius: 6px;
-            background: var(--panel-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            outline: none;
+            height: 100%;
+            image-rendering: pixelated;
         }
 
-        .score-board {
+        /* ── Score display ── */
+        #scoreDisplay {
             position: absolute;
-            top: 15px;
-            left: 0; right: 0;
-            text-align: center;
-            font-size: 2rem;
-            font-weight: 800;
+            top: 16px; left: 50%;
+            transform: translateX(-50%);
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 8vw, 3rem);
+            font-weight: 900;
             color: #fff;
-            text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+            text-shadow: 0 2px 12px rgba(0,0,0,.5);
             z-index: 5;
             pointer-events: none;
+            letter-spacing: -.02em;
         }
 
-        .menu-text {
+        /* ── Overlay screens ── */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0,0,0,.52);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 20;
+            padding: 24px;
+            pointer-events: none; /* pass-through by default */
+        }
+        .overlay.interactive { pointer-events: auto; }
+        .overlay.hidden { display: none !important; }
+
+        .panel {
+            background: var(--c-surface);
+            border: 1px solid var(--c-border);
+            border-radius: 20px;
+            padding: 28px 26px;
+            width: 100%;
+            max-width: 320px;
+            pointer-events: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,.3);
+        }
+
+        .panel-title {
+            font-family: var(--font-display);
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--c-text);
+            margin-bottom: 6px;
             text-align: center;
-            font-size: 1rem;
-            margin-top: 10px;
-            animation: pulse 1.5s infinite;
         }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.03); }
+        .panel-sub {
+            font-size: .88rem;
+            color: var(--c-muted);
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.5;
         }
+
+        .menu-tap-hint {
+            color: #fff;
+            font-size: clamp(.9rem, 3vw, 1.1rem);
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: .05em;
+            animation: tapPulse 1.6s ease-in-out infinite;
+            margin-top: 12px;
+            text-shadow: 0 2px 8px rgba(0,0,0,.5);
+        }
+        @keyframes tapPulse {
+            0%,100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: .5; transform: scale(.97); }
+        }
+
+        .game-title {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 8vw, 3.2rem);
+            font-weight: 900;
+            color: #fff;
+            text-align: center;
+            text-shadow: 0 4px 20px rgba(0,0,0,.6);
+            letter-spacing: -.02em;
+        }
+
+        .score-big {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 12vw, 5rem);
+            font-weight: 900;
+            color: var(--c-accent);
+            text-align: center;
+            line-height: 1;
+            margin: 8px 0 4px;
+        }
+        .best-label {
+            font-size: .78rem;
+            color: var(--c-muted);
+            text-align: center;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        /* Form controls */
+        .setting-group { margin-bottom: 14px; }
+        .setting-group label {
+            display: block;
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--c-muted);
+            margin-bottom: 5px;
+        }
+        .setting-group select {
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--c-border);
+            background: var(--c-bg);
+            color: var(--c-text);
+            font-size: .9rem;
+            font-family: var(--font-body);
+            outline: none;
+            cursor: pointer;
+        }
+
+        .action-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-top: 6px;
+            border-radius: 100px;
+            border: none;
+            background: var(--c-accent);
+            color: #fff;
+            font-size: .95rem;
+            font-weight: 700;
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: transform .15s, box-shadow .15s;
+        }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(29,78,216,.4); }
+        .action-btn:active { transform: translateY(0); }
+
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px;
+            color: var(--c-muted);
+            text-decoration: none;
+            font-size: .82rem;
+            font-weight: 600;
+        }
+        .back-link:hover { color: var(--c-accent); }
+
+        /* Icon-only sun/moon inside theme btn */
+        .icon-sun  { display: none; }
+        .icon-moon { display: block; }
+        [data-theme="dark"] .icon-sun  { display: block; }
+        [data-theme="dark"] .icon-moon { display: none; }
     </style>
 </head>
 <body data-theme="light">
 
-    <div class="header-controls interactive-panel">
-        <button class="btn" id="settingsBtn">⚙️ Settings</button>
-        <div class="theme-switch-wrapper">
-            <span>☀️</span>
-            <label class="theme-switch">
-                <input type="checkbox" id="themeToggle">
-                <span class="slider"></span>
-            </label>
-            <span>🌙</span>
+    <!-- Top bar -->
+    <div class="topbar">
+        <a href="index.html" class="back-link topbar-logo">M<span>.</span></a>
+        <div class="topbar-controls">
+            <button class="settings-btn" id="settingsBtn">⚙ Settings</button>
+            <button class="icon-btn" id="themeBtn" aria-label="Toggle theme">
+                <span class="icon-sun">☀️</span>
+                <span class="icon-moon">🌙</span>
+            </button>
         </div>
     </div>
 
-    <div class="game-viewport">
-        <div class="score-board" id="scoreDisplay">0</div>
-        
+    <!-- Game viewport -->
+    <div class="game-viewport" id="gameViewport">
+
+        <div id="scoreDisplay">0</div>
+
+        <!-- Start / Game-over screen -->
         <div class="overlay" id="startScreen">
-            <h1 id="menuTitle" style="font-size: 2rem; text-align:center; letter-spacing: 1px;">BIRD ODYSSEY</h1>
-            <p class="menu-text" id="menuInstruction">Tap Screen to Fly</p>
+            <div class="game-title" id="menuTitle">BIRD ODYSSEY</div>
+            <p class="menu-tap-hint" id="menuHint">Tap to Fly</p>
         </div>
 
-        <div class="overlay interactive-panel hidden" id="settingsModal">
+        <!-- Game-over stats card -->
+        <div class="overlay interactive hidden" id="gameOverScreen">
             <div class="panel">
-                <h2>Game Settings</h2>
+                <div class="panel-title">Game Over</div>
+                <div class="score-big" id="finalScore">0</div>
+                <div class="best-label">Best: <span id="bestScore">0</span></div>
+                <button class="action-btn" id="restartBtn">Play Again</button>
+            </div>
+        </div>
+
+        <!-- Settings panel -->
+        <div class="overlay interactive hidden" id="settingsScreen">
+            <div class="panel">
+                <div class="panel-title">Settings</div>
+                <div class="panel-sub">Customise your experience</div>
+
                 <div class="setting-group">
-                    <label for="difficulty">Difficulty Level</label>
+                    <label for="difficulty">Difficulty</label>
                     <select id="difficulty">
-                        <option value="easy">Easy (Wide Gaps)</option>
+                        <option value="easy">Easy — Wide Gaps</option>
                         <option value="normal" selected>Normal</option>
-                        <option value="hard">Hard (Narrow Gaps)</option>
+                        <option value="hard">Hard — Narrow Gaps</option>
                     </select>
                 </div>
                 <div class="setting-group">
-                    <label for="graphics">Graphics Quality</label>
+                    <label for="graphics">Graphics</label>
                     <select id="graphics">
-                        <option value="high" selected>High (Glow & Particles)</option>
-                        <option value="low">Low (Battery Saver)</option>
+                        <option value="high" selected>High — Glow &amp; Particles</option>
+                        <option value="low">Low — Battery Saver</option>
                     </select>
                 </div>
                 <div class="setting-group">
-                    <label for="gameMode">Game Mode</label>
+                    <label for="gameMode">Mode</label>
                     <select id="gameMode">
                         <option value="classic" selected>Classic Flappy</option>
                         <option value="gravity">Reverse Gravity</option>
                     </select>
                 </div>
-                <button class="btn" id="closeSettingsBtn" style="width:100%; margin-top:5px; background: var(--accent-color); color:white; border:none; padding: 10px;">
-                    Apply Changes
-                </button>
+                <button class="action-btn" id="applyBtn">Apply &amp; Close</button>
             </div>
         </div>
 
@@ -267,120 +353,181 @@
     </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        const themeToggle = document.getElementById('themeToggle');
-        const settingsBtn = document.getElementById('settingsBtn');
-        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
-        const settingsModal = document.getElementById('settingsModal');
-        const startScreen = document.getElementById('startScreen');
-        const scoreDisplay = document.getElementById('scoreDisplay');
-        const menuTitle = document.getElementById('menuTitle');
-        const menuInstruction = document.getElementById('menuInstruction');
+    (() => {
+        "use strict";
 
-        let gameState = 'START';
+        /* ── Elements ─────────────────────────── */
+        const canvas        = document.getElementById("gameCanvas");
+        const ctx           = canvas.getContext("2d");
+        const viewport      = document.getElementById("gameViewport");
+        const scoreDisplay  = document.getElementById("scoreDisplay");
+        const startScreen   = document.getElementById("startScreen");
+        const gameOverScreen= document.getElementById("gameOverScreen");
+        const settingsScreen= document.getElementById("settingsScreen");
+        const menuTitle     = document.getElementById("menuTitle");
+        const menuHint      = document.getElementById("menuHint");
+        const finalScore    = document.getElementById("finalScore");
+        const bestScoreEl   = document.getElementById("bestScore");
+        const settingsBtn   = document.getElementById("settingsBtn");
+        const applyBtn      = document.getElementById("applyBtn");
+        const restartBtn    = document.getElementById("restartBtn");
+        const themeBtn      = document.getElementById("themeBtn");
+
+        /* ── Theme ─────────────────────────────── */
+        const body = document.body;
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme) body.setAttribute("data-theme", savedTheme);
+        else if (window.matchMedia("(prefers-color-scheme: dark)").matches)
+            body.setAttribute("data-theme", "dark");
+
+        themeBtn.addEventListener("click", () => {
+            const next = body.getAttribute("data-theme") === "dark" ? "light" : "dark";
+            body.setAttribute("data-theme", next);
+            localStorage.setItem("theme", next);
+        });
+
+        /* ── Config ────────────────────────────── */
+        let cfg = { difficulty: "normal", graphics: "high", mode: "classic" };
+        let bestScore = parseInt(localStorage.getItem("bestScore") || "0", 10);
+        bestScoreEl.textContent = bestScore;
+
+        /* ── Game state ────────────────────────── */
+        const STATE = { IDLE: 0, PLAYING: 1, DEAD: 2 };
+        let state = STATE.IDLE;
         let score = 0;
-        let particles = [];
-        let pipes = [];
-        let frameCount = 0;
+        let frameId = null;
+        let lastTime = 0;
+        const MAX_DT = 50; // cap delta to avoid spiral of death
 
-        let config = {
-            theme: 'light',
-            difficulty: 'normal',
-            graphics: 'high',
-            mode: 'classic'
-        };
+        /* ── Logical (virtual) canvas size ────── */
+        // We draw in a fixed logical space and CSS scales the canvas element.
+        // This means no resize redraws — just one layout change.
+        const LW = 400; // logical width
+        const LH = 700; // logical height
+        canvas.width  = LW;
+        canvas.height = LH;
 
-        let scaleFactor = 1;
-        const baseWidth = 400;
-        const baseHeight = 700;
-
-        function resizeCanvas() {
-            const viewport = document.querySelector('.game-viewport');
-            const viewWidth = viewport.clientWidth;
-            const viewHeight = viewport.clientHeight;
-
-            const ratio = baseWidth / baseHeight;
-            let width = viewWidth;
-            let height = viewWidth / ratio;
-
-            if (height > viewHeight) {
-                height = viewHeight;
-                width = viewHeight * ratio;
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            scaleFactor = height / baseHeight;
-            resetGame();
+        /* ── Scale canvas to always fill viewport ─ */
+        function fitCanvas() {
+            const vw = viewport.clientWidth;
+            const vh = viewport.clientHeight;
+            const scale = Math.min(vw / LW, vh / LH);
+            // Use CSS transform (GPU-composited, no resize event needed)
+            canvas.style.width  = LW * scale + "px";
+            canvas.style.height = LH * scale + "px";
+            canvas.style.position = "absolute";
+            canvas.style.top  = (vh - LH * scale) / 2 + "px";
+            canvas.style.left = (vw - LW * scale) / 2 + "px";
         }
 
-        const settingsMatrix = {
-            easy: { gapRatio: 0.26, speedRatio: 0.006, pipeInterval: 100 },
-            normal: { gapRatio: 0.21, speedRatio: 0.008, pipeInterval: 85 },
-            hard: { gapRatio: 0.17, speedRatio: 0.010, pipeInterval: 70 }
+        const resizeObs = new ResizeObserver(fitCanvas);
+        resizeObs.observe(viewport);
+        fitCanvas();
+
+        /* ── Difficulty table ──────────────────── */
+        const DIFF = {
+            easy:   { gap: 185, speed: 2.2, interval: 120 },
+            normal: { gap: 155, speed: 2.8, interval: 100 },
+            hard:   { gap: 120, speed: 3.6, interval:  80 }
         };
 
+        /* ── Bird ──────────────────────────────── */
         const bird = {
-            x: 0, y: 0, radius: 0, velocity: 0,
-            gravity: 0.38, jump: -6.8, angle: 0,
+            x: LW * 0.22,
+            y: LH / 2,
+            r: 14,           // radius
+            vy: 0,
+            gravity: 0.42,
+            jumpPow: -7.5,
+            angle: 0,
+            // Particle trail
+            trail: [],
 
-            init() {
-                this.x = canvas.width * 0.22;
-                this.y = canvas.height / 2;
-                this.radius = 14 * scaleFactor;
-                this.velocity = 0;
+            reset() {
+                this.y  = LH / 2;
+                this.vy = 0;
+                this.angle = 0;
+                this.trail = [];
             },
-            update() {
-                let currentGravity = (config.mode === 'gravity' ? -this.gravity : this.gravity) * scaleFactor;
-                this.velocity += currentGravity;
-                this.y += this.velocity;
 
-                if (config.mode === 'gravity') {
-                    this.angle = Math.max(-Math.PI/6, Math.min(Math.PI/3, -this.velocity * 0.07 / scaleFactor));
-                } else {
-                    this.angle = Math.max(-Math.PI/6, Math.min(Math.PI/3, this.velocity * 0.07 / scaleFactor));
+            jump() {
+                const pow = cfg.mode === "gravity" ? -this.jumpPow : this.jumpPow;
+                this.vy = pow;
+                if (cfg.graphics === "high") spawnParticles(this.x, this.y, 6);
+            },
+
+            update(dt) {
+                const g = this.gravity * (cfg.mode === "gravity" ? -1 : 1);
+                this.vy += g * dt;
+                this.y  += this.vy * dt;
+
+                const maxAngle = Math.PI / 3;
+                const sign = cfg.mode === "gravity" ? -1 : 1;
+                this.angle = Math.max(-maxAngle, Math.min(maxAngle, this.vy * 0.06 * sign));
+
+                // Trail
+                if (cfg.graphics === "high") {
+                    this.trail.push({ x: this.x, y: this.y, a: 1 });
+                    if (this.trail.length > 8) this.trail.shift();
+                    this.trail.forEach(t => { t.a -= 0.12; });
                 }
 
-                if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
-                    endGame();
-                }
+                if (this.y + this.r > LH || this.y - this.r < 0) die();
             },
-            jumpAction() {
-                const calculatedJump = this.jump * scaleFactor;
-                this.velocity = config.mode === 'gravity' ? -calculatedJump : calculatedJump;
-                if(config.graphics === 'high') createFlapParticles(this.x, this.y);
-            },
+
             draw() {
+                // Trail
+                if (cfg.graphics === "high") {
+                    this.trail.forEach((t, i) => {
+                        if (t.a <= 0) return;
+                        ctx.save();
+                        ctx.globalAlpha = t.a * 0.4;
+                        ctx.fillStyle = isDark() ? "#38bdf8" : "#1d4ed8";
+                        ctx.beginPath();
+                        ctx.arc(t.x, t.y, this.r * (i / this.trail.length) * 0.7, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    });
+                }
+
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle);
 
-                if(config.graphics === 'high') {
-                    ctx.shadowBlur = 12 * scaleFactor;
-                    ctx.shadowColor = '#f59e0b';
+                if (cfg.graphics === "high") {
+                    ctx.shadowBlur  = 16;
+                    ctx.shadowColor = "#f59e0b";
                 }
-                
-                ctx.fillStyle = '#f59e0b';
+
+                // Body
+                ctx.fillStyle = "#f59e0b";
                 ctx.beginPath();
-                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.arc(0, 0, this.r, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#ffffff';
+                // Wing
+                ctx.fillStyle = "#fbbf24";
                 ctx.beginPath();
-                ctx.arc(this.radius * 0.4, -this.radius * 0.25, this.radius * 0.3, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#000000';
-                ctx.beginPath();
-                ctx.arc(this.radius * 0.45, -this.radius * 0.25, this.radius * 0.12, 0, Math.PI * 2);
+                ctx.ellipse(-this.r * 0.3, this.r * 0.5, this.r * 0.5, this.r * 0.25, -0.5, 0, Math.PI * 2);
                 ctx.fill();
 
-                ctx.fillStyle = '#ef4444';
+                // Eye
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = "#fff";
                 ctx.beginPath();
-                ctx.moveTo(this.radius * 0.75, -this.radius * 0.1);
-                ctx.lineTo(this.radius * 1.5,  this.radius * 0.1);
-                ctx.lineTo(this.radius * 0.75,  this.radius * 0.3);
+                ctx.arc(this.r * 0.4, -this.r * 0.25, this.r * 0.32, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = "#111";
+                ctx.beginPath();
+                ctx.arc(this.r * 0.46, -this.r * 0.25, this.r * 0.14, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Beak
+                ctx.fillStyle = "#ef4444";
+                ctx.beginPath();
+                ctx.moveTo(this.r * 0.75, -this.r * 0.08);
+                ctx.lineTo(this.r * 1.5,   this.r * 0.1);
+                ctx.lineTo(this.r * 0.75,  this.r * 0.28);
                 ctx.closePath();
                 ctx.fill();
 
@@ -388,235 +535,256 @@
             }
         };
 
-        // Theme Switch
-        themeToggle.addEventListener('change', (e) => {
-            const chosenTheme = e.target.checked ? 'dark' : 'light';
-            document.body.setAttribute('data-theme', chosenTheme);
-            config.theme = chosenTheme;
-        });
+        /* ── Pipes ─────────────────────────────── */
+        let pipes = [];
+        let pipeFrame = 0;
 
-        // Settings Menu Logic
-        settingsBtn.addEventListener('click', (e) => { 
-            e.stopPropagation(); 
-            settingsModal.classList.remove('hidden'); 
-        });
-        settingsBtn.addEventListener('touchstart', (e) => { 
-            e.stopPropagation(); 
-            settingsModal.classList.remove('hidden'); 
-        });
-
-        closeSettingsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            applySettings();
-        });
-        closeSettingsBtn.addEventListener('touchstart', (e) => {
-            e.stopPropagation();
-            applySettings();
-        });
-
-        function applySettings() {
-            config.difficulty = document.getElementById('difficulty').value;
-            config.graphics = document.getElementById('graphics').value;
-            config.mode = document.getElementById('gameMode').value;
-            settingsModal.classList.add('hidden');
-            resetGame();
+        function spawnPipe() {
+            const d = DIFF[cfg.difficulty];
+            const minH = LH * 0.12;
+            const maxH = LH - d.gap - minH;
+            const topH = Math.random() * (maxH - minH) + minH;
+            pipes.push({ x: LW, topH, botY: topH + d.gap, w: 54, passed: false });
         }
 
-        function createFlapParticles(x, y) {
-            for(let i=0; i<5; i++) {
-                particles.push({
-                    x: x, y: y,
-                    vx: (-1.5 - Math.random() * 2) * scaleFactor,
-                    vy: (Math.random() - 0.5) * 3 * scaleFactor,
-                    radius: (2 + Math.random() * 3) * scaleFactor,
-                    alpha: 1,
-                    color: config.theme === 'dark' ? '#38bdf8' : '#3b82f6'
-                });
-            }
-        }
+        function updatePipes(dt) {
+            const d = DIFF[cfg.difficulty];
+            pipeFrame++;
+            if (pipeFrame % d.interval === 0) spawnPipe();
 
-        function generatePipes() {
-            const setup = settingsMatrix[config.difficulty];
-            const gapSpace = canvas.height * setup.gapRatio;
-            const minHeight = canvas.height * 0.12;
-            const maxHeight = canvas.height - gapSpace - minHeight;
-            const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+            const speed = d.speed * dt;
+            for (let i = pipes.length - 1; i >= 0; i--) {
+                const p = pipes[i];
+                p.x -= speed;
 
-            pipes.push({
-                x: canvas.width,
-                topHeight: topHeight,
-                bottomY: topHeight + gapSpace,
-                width: 60 * scaleFactor,
-                passed: false
-            });
-        }
-
-        function updatePipes() {
-            const setup = settingsMatrix[config.difficulty];
-            if (frameCount % setup.pipeInterval === 0) generatePipes();
-
-            const speed = canvas.width * setup.speedRatio;
-
-            for(let i = pipes.length - 1; i >= 0; i--) {
-                let pipe = pipes[i];
-                pipe.x -= speed;
-
-                if (bird.x + bird.radius > pipe.x && bird.x - bird.radius < pipe.x + pipe.width) {
-                    if (bird.y - bird.radius < pipe.topHeight || bird.y + bird.radius > pipe.bottomY) {
-                        endGame();
-                    }
+                // Collision — AABB with circle approximation
+                if (bird.x + bird.r > p.x && bird.x - bird.r < p.x + p.w) {
+                    if (bird.y - bird.r < p.topH || bird.y + bird.r > p.botY) { die(); return; }
                 }
 
-                if (!pipe.passed && pipe.x + pipe.width < bird.x) {
-                    pipe.passed = true;
+                if (!p.passed && p.x + p.w < bird.x) {
+                    p.passed = true;
                     score++;
-                    scoreDisplay.innerText = score;
+                    scoreDisplay.textContent = score;
                 }
-                if(pipe.x + pipe.width < 0) pipes.splice(i, 1);
+
+                if (p.x + p.w < 0) pipes.splice(i, 1);
             }
         }
 
         function drawPipes() {
-            pipes.forEach(pipe => {
+            const dark = isDark();
+            const mainC = dark ? "#059669" : "#10b981";
+            const rimC  = dark ? "#34d399" : "#047857";
+            const lipH  = 18;
+
+            pipes.forEach(p => {
+                if (cfg.graphics === "high") {
+                    ctx.shadowBlur  = 8;
+                    ctx.shadowColor = rimC;
+                }
+
+                // Top pipe
+                ctx.fillStyle = mainC;
+                ctx.fillRect(p.x, 0, p.w, p.topH);
+                ctx.fillStyle = rimC;
+                ctx.fillRect(p.x - 3, p.topH - lipH, p.w + 6, lipH);
+
+                // Bottom pipe
+                ctx.fillStyle = mainC;
+                ctx.fillRect(p.x, p.botY, p.w, LH - p.botY);
+                ctx.fillStyle = rimC;
+                ctx.fillRect(p.x - 3, p.botY, p.w + 6, lipH);
+
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        /* ── Particles ─────────────────────────── */
+        let particles = [];
+
+        function spawnParticles(x, y, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x, y,
+                    vx: (-1 - Math.random() * 2),
+                    vy: (Math.random() - .5) * 3,
+                    r:  2 + Math.random() * 2.5,
+                    a:  1,
+                    color: isDark() ? "#38bdf8" : "#1d4ed8"
+                });
+            }
+        }
+
+        function updateParticles(dt) {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.a -= 0.04 * dt;
+                if (p.a <= 0) particles.splice(i, 1);
+            }
+        }
+
+        function drawParticles() {
+            particles.forEach(p => {
+                if (p.a <= 0) return;
                 ctx.save();
-                let mainColor = config.theme === 'dark' ? '#059669' : '#10b981';
-                let rimColor = config.theme === 'dark' ? '#34d399' : '#047857';
-                
-                ctx.fillStyle = mainColor;
-                ctx.strokeStyle = rimColor;
-                ctx.lineWidth = 2.5 * scaleFactor;
-
-                ctx.fillRect(pipe.x, 0, pipe.width, pipe.topHeight);
-                ctx.strokeRect(pipe.x, -5, pipe.width, pipe.topHeight + 5);
-                
-                ctx.fillStyle = rimColor;
-                let lipHeight = 20 * scaleFactor;
-                ctx.fillRect(pipe.x - (3 * scaleFactor), pipe.topHeight - lipHeight, pipe.width + (6 * scaleFactor), lipHeight);
-
-                ctx.fillStyle = mainColor;
-                ctx.fillRect(pipe.x, pipe.bottomY, pipe.width, canvas.height - pipe.bottomY);
-                ctx.strokeRect(pipe.x, pipe.bottomY, pipe.width, canvas.height - pipe.bottomY + 5);
-                
-                ctx.fillStyle = rimColor;
-                ctx.fillRect(pipe.x - (3 * scaleFactor), pipe.bottomY, pipe.width + (6 * scaleFactor), lipHeight);
-
+                ctx.globalAlpha = p.a;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fill();
                 ctx.restore();
             });
         }
 
-        function drawBackground() {
-            let gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            if (config.theme === 'dark') {
-                gradient.addColorStop(0, '#1e1b4b'); gradient.addColorStop(1, '#020617');
-            } else {
-                gradient.addColorStop(0, '#bae6fd'); gradient.addColorStop(1, '#f1f5f9');
-            }
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        /* ── Background ────────────────────────── */
+        // Pre-compute gradient so we don't recreate it every frame
+        let bgGrad = null;
+        let lastTheme = "";
 
-            if (config.graphics === 'high') {
-                ctx.strokeStyle = config.theme === 'dark' ? 'rgba(56, 189, 248, 0.05)' : 'rgba(59, 130, 246, 0.05)';
-                ctx.lineWidth = 1.5;
-                let step = 35 * scaleFactor;
-                for(let i = 0; i < canvas.width; i += step) {
-                    ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke();
+        function drawBackground() {
+            const dark = isDark();
+            const themeKey = dark ? "dark" : "light";
+            if (!bgGrad || themeKey !== lastTheme) {
+                bgGrad = ctx.createLinearGradient(0, 0, 0, LH);
+                if (dark) {
+                    bgGrad.addColorStop(0, "#1e1b4b");
+                    bgGrad.addColorStop(1, "#020617");
+                } else {
+                    bgGrad.addColorStop(0, "#bae6fd");
+                    bgGrad.addColorStop(1, "#f0f9ff");
                 }
-                for(let j = 0; j < canvas.height; j += step) {
-                    ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke();
+                lastTheme = themeKey;
+            }
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, LW, LH);
+
+            // Subtle grid — only in high quality
+            if (cfg.graphics === "high") {
+                ctx.strokeStyle = dark
+                    ? "rgba(56,189,248,.04)"
+                    : "rgba(29,78,216,.04)";
+                ctx.lineWidth = 1;
+                const step = 35;
+                for (let x = 0; x < LW; x += step) {
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, LH); ctx.stroke();
+                }
+                for (let y = 0; y < LH; y += step) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(LW, y); ctx.stroke();
                 }
             }
+
+            // Ground
+            ctx.fillStyle = dark ? "#064e3b" : "#166534";
+            ctx.fillRect(0, LH - 10, LW, 10);
         }
 
-        function resetGame() {
-            bird.init();
+        /* ── Game flow ─────────────────────────── */
+        function reset() {
+            bird.reset();
             pipes = [];
             particles = [];
             score = 0;
-            frameCount = 0;
-            scoreDisplay.innerText = score;
+            pipeFrame = 0;
+            scoreDisplay.textContent = "0";
         }
 
-        function triggerAction(e) {
-            // Ignore inputs if settings panel is actively open
-            if (!settingsModal.classList.contains('hidden')) return;
-            
-            // Prevent bird jumping when hitting settings button at top of screen
-            if (e && e.target && (e.target.closest('.header-controls') || e.target.closest('.panel'))) return;
+        function startGame() {
+            reset();
+            state = STATE.PLAYING;
+            startScreen.classList.add("hidden");
+            gameOverScreen.classList.add("hidden");
+        }
 
-            if (gameState === 'START' || gameState === 'GAMEOVER') {
-                resetGame();
-                gameState = 'PLAYING';
-                startScreen.classList.add('hidden');
-            } else if (gameState === 'PLAYING') {
-                bird.jumpAction();
+        function die() {
+            if (state !== STATE.PLAYING) return;
+            state = STATE.DEAD;
+
+            if (score > bestScore) {
+                bestScore = score;
+                localStorage.setItem("bestScore", bestScore);
             }
+            bestScoreEl.textContent = bestScore;
+            finalScore.textContent  = score;
+            gameOverScreen.classList.remove("hidden");
         }
 
-        function endGame() {
-            gameState = 'GAMEOVER';
-            menuTitle.innerText = "GAME OVER";
-            menuInstruction.innerText = `Final Score: ${score}\n\nTap Screen to Restart`;
-            startScreen.classList.remove('hidden');
-        }
+        /* ── Main loop ─────────────────────────── */
+        function loop(ts) {
+            frameId = requestAnimationFrame(loop);
 
-        // --- GLOBAL ROOT INTERACTION ENGINE ---
-        // Listening to the absolute window level guarantees your input bypasses all DOM stacking blocks
-        window.addEventListener('touchstart', (e) => {
-            // If tweaking options in options-box, let browser run normal touches
-            if (e.target.closest('.interactive-panel')) return;
-            
-            e.preventDefault(); 
-            triggerAction(e);
-        }, { passive: false });
+            const dt = Math.min(ts - lastTime, MAX_DT) / 16.67; // normalise to ~60fps units
+            lastTime = ts;
 
-        window.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.interactive-panel')) return;
-            triggerAction(e);
-        });
-
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' || e.code === 'ArrowUp') { 
-                e.preventDefault(); 
-                triggerAction(e); 
-            }
-        });
-
-        window.addEventListener('resize', () => {
-            setTimeout(resizeCanvas, 100);
-        });
-        window.addEventListener('orientationchange', () => {
-            setTimeout(resizeCanvas, 200);
-        });
-
-        function gameLoop() {
             drawBackground();
-            if (gameState === 'PLAYING') {
-                frameCount++;
-                bird.update();
-                updatePipes();
-                if(config.graphics === 'high') {
-                    for(let i = particles.length - 1; i >= 0; i--) {
-                        let p = particles[i]; p.x += p.vx; p.y += p.vy; p.alpha -= 0.04;
-                        if(p.alpha <= 0) particles.splice(i, 1);
-                    }
-                }
+
+            if (state === STATE.PLAYING) {
+                bird.update(dt);
+                updatePipes(dt);
+                if (cfg.graphics === "high") updateParticles(dt);
             }
+
             drawPipes();
-            if(config.graphics === 'high') {
-                particles.forEach(p => {
-                    ctx.save(); ctx.globalAlpha = p.alpha; ctx.fillStyle = p.color;
-                    ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-                });
-            }
+            if (cfg.graphics === "high") drawParticles();
             bird.draw();
-            requestAnimationFrame(gameLoop);
         }
 
-        // Run Init
-        window.onload = () => {
-            resizeCanvas();
-            gameLoop();
-        };
+        frameId = requestAnimationFrame((ts) => { lastTime = ts; loop(ts); });
+
+        /* ── Input ─────────────────────────────── */
+        function action(e) {
+            // Ignore if any overlay panel is active
+            if (!settingsScreen.classList.contains("hidden")) return;
+            if (e && e.target && e.target.closest(".panel")) return;
+
+            if (state === STATE.IDLE || state === STATE.DEAD) {
+                // If game-over card is showing, only start via restart button
+                if (state === STATE.DEAD && !gameOverScreen.classList.contains("hidden")) return;
+                startGame();
+            } else if (state === STATE.PLAYING) {
+                bird.jump();
+            }
+        }
+
+        // Global listeners — lowest cost possible
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Space" || e.code === "ArrowUp") { e.preventDefault(); action(e); }
+        });
+        window.addEventListener("pointerdown", (e) => {
+            if (e.target.closest(".panel") || e.target.closest(".topbar")) return;
+            action(e);
+        }, { passive: true });
+
+        /* ── UI buttons ────────────────────────── */
+        settingsBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            settingsScreen.classList.remove("hidden");
+        });
+
+        applyBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            cfg.difficulty = document.getElementById("difficulty").value;
+            cfg.graphics   = document.getElementById("graphics").value;
+            cfg.mode       = document.getElementById("gameMode").value;
+            bgGrad = null; // force gradient rebuild
+            settingsScreen.classList.add("hidden");
+            if (state !== STATE.PLAYING) reset();
+        });
+
+        restartBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            gameOverScreen.classList.add("hidden");
+            startGame();
+        });
+
+        /* ── Helpers ───────────────────────────── */
+        function isDark() {
+            return document.body.getAttribute("data-theme") === "dark";
+        }
+
+    })();
     </script>
 </body>
 </html>

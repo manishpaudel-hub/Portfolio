@@ -1,89 +1,149 @@
+/* ============================================================
+   MANISH PAUDEL — script.js
+   Performance notes:
+   - IntersectionObserver replaces scroll listener (no repaints)
+   - Passive event listeners throughout
+   - Drawer uses CSS left transition (not JS animation)
+   ============================================================ */
+
 document.addEventListener("DOMContentLoaded", () => {
-    
-/* --- 1. Custom Pill Theme Switcher (System Auto-Detect Enabled) --- */
-const pcThemeToggleBtn = document.getElementById("theme-toggle");
-const mobileThemeToggleBtn = document.getElementById("theme-toggle-mobile");
-const body = document.body;
 
-// 1. Check if the user manually saved a theme preference before
-const savedTheme = localStorage.getItem("theme");
+    /* ── 1. THEME (system-auto-detect + localStorage) ─────── */
+    const body = document.body;
+    const themeBtn = document.getElementById("theme-toggle");
 
-if (savedTheme) {
-    // If they have a saved preference, use it
-    body.setAttribute("data-theme", savedTheme);
-} else {
-    // If it's their first time, check their system/device theme setting automatically
-    const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialTheme = prefersDarkMode ? "dark" : "light";
-    body.setAttribute("data-theme", initialTheme);
-}
+    const savedTheme = localStorage.getItem("theme");
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    body.setAttribute("data-theme", savedTheme || (systemDark ? "dark" : "light"));
 
-function toggleTheme() {
-    const activeTheme = body.getAttribute("data-theme");
-    if (activeTheme === "dark") {
-        body.setAttribute("data-theme", "light");
-        localStorage.setItem("theme", "light"); // Remembers choice for next visit
-    } else {
-        body.setAttribute("data-theme", "dark");
-        localStorage.setItem("theme", "dark");  // Remembers choice for next visit
+    function toggleTheme() {
+        const next = body.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        body.setAttribute("data-theme", next);
+        localStorage.setItem("theme", next);
     }
-}
-
-// Attach listeners across all components
-if(pcThemeToggleBtn) pcThemeToggleBtn.addEventListener("click", toggleTheme);
-if(mobileThemeToggleBtn) mobileThemeToggleBtn.addEventListener("click", toggleTheme);
+    if (themeBtn) themeBtn.addEventListener("click", toggleTheme);
 
 
-    /* --- 2. Partial Mobile Menu (70% Drawer Width Viewport Controls) --- */
-    const mobileMenuBtn = document.getElementById("mobile-menu-btn");
-    const navMenu = document.getElementById("nav-menu");
+    /* ── 2. MOBILE NAV DRAWER ─────────────────────────────── */
+    const menuBtn  = document.getElementById("mobile-menu-btn");
+    const navMenu  = document.getElementById("nav-menu");
     const navItems = document.querySelectorAll(".nav-item");
 
-    mobileMenuBtn.addEventListener("click", (e) => {
+    function openNav()  {
+        navMenu.classList.add("mobile-active");
+        menuBtn.querySelector("i").classList.replace("fa-bars","fa-xmark");
+        menuBtn.setAttribute("aria-expanded","true");
+    }
+    function closeNav() {
+        navMenu.classList.remove("mobile-active");
+        menuBtn.querySelector("i").classList.replace("fa-xmark","fa-bars");
+        menuBtn.setAttribute("aria-expanded","false");
+    }
+
+    menuBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        navMenu.classList.toggle("mobile-active");
-        
-        const icon = mobileMenuBtn.querySelector("i");
-        icon.classList.toggle("fa-bars");
-        icon.classList.toggle("fa-xmark");
+        navMenu.classList.contains("mobile-active") ? closeNav() : openNav();
     });
 
-    // Automatically close the sliding menu when an option is clicked
-    navItems.forEach(item => {
-        item.addEventListener("click", () => {
-            navMenu.classList.remove("mobile-active");
-            const icon = mobileMenuBtn.querySelector("i");
-            icon.classList.add("fa-bars");
-            icon.classList.remove("fa-xmark");
-        });
-    });
+    navItems.forEach(item => item.addEventListener("click", closeNav));
 
-    // Close mobile drawer when clicking anywhere outside of it
     document.addEventListener("click", (e) => {
-        if (navMenu.classList.contains("mobile-active") && !navMenu.contains(e.target) && e.target !== mobileMenuBtn) {
-            navMenu.classList.remove("mobile-active");
-            const icon = mobileMenuBtn.querySelector("i");
-            icon.classList.add("fa-bars");
-            icon.classList.remove("fa-xmark");
-        }
+        if (navMenu.classList.contains("mobile-active") &&
+            !navMenu.contains(e.target) && e.target !== menuBtn) closeNav();
     });
 
 
-    /* --- 3. Viewport Scroll Popups Observer Engine --- */
-    const popUpElements = document.querySelectorAll(".pop-up");
-
-    const checkVisibility = () => {
-        const triggerBottom = (window.innerHeight / 5) * 4;
-
-        popUpElements.forEach((element) => {
-            const elementTop = element.getBoundingClientRect().top;
-
-            if (elementTop < triggerBottom) {
-                element.classList.add("active");
+    /* ── 3. SCROLL ANIMATIONS (IntersectionObserver — zero scroll cost) */
+    const popUps = document.querySelectorAll(".pop-up");
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("active");
+                observer.unobserve(entry.target); // fire once, then stop observing
             }
         });
-    };
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
 
-    checkVisibility();
-    window.addEventListener("scroll", checkVisibility, { passive: true });
+    popUps.forEach(el => observer.observe(el));
+
+
+    /* ── 4. ACTIVE NAV HIGHLIGHT on scroll ───────────────── */
+    const sections = document.querySelectorAll("section[id]");
+    const navLinks = document.querySelectorAll(".nav-links a");
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(a => a.classList.remove("active"));
+                const link = document.querySelector(`.nav-links a[href="#${entry.target.id}"]`);
+                if (link) link.classList.add("active");
+            }
+        });
+    }, { threshold: 0.4 });
+
+    sections.forEach(s => sectionObserver.observe(s));
+
+
+    /* ── 5. CONTACT FORM (Formspree) ─────────────────────── */
+    /*
+        HOW TO SET UP (takes ~3 minutes):
+        ──────────────────────────────────
+        1. Go to https://formspree.io → Sign up for FREE
+        2. Click "New Form" → give it a name like "Portfolio Contact"
+        3. Copy the endpoint URL (looks like: https://formspree.io/f/xpwzqabc)
+        4. In index.html, replace action="https://formspree.io/f/YOUR_FORM_ID"
+           with your actual URL.
+        5. Done! All submissions will land in your email.
+
+        Alternative — Netlify (even easier):
+        ──────────────────────────────────
+        1. Drag your portfolio folder to https://app.netlify.com/drop
+        2. Add the attribute  netlify  to your <form> tag
+        3. Netlify captures submissions automatically, no JS needed.
+    */
+
+    const contactForm = document.getElementById("contact-form");
+    const formStatus  = document.getElementById("form-status");
+    const submitBtn   = document.getElementById("submit-btn");
+
+    if (contactForm) {
+        contactForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            // Show loading state
+            const btnText    = submitBtn.querySelector(".btn-text");
+            const btnLoading = submitBtn.querySelector(".btn-loading");
+            btnText.classList.add("hidden");
+            btnLoading.classList.remove("hidden");
+            submitBtn.disabled = true;
+            formStatus.textContent = "";
+            formStatus.className = "form-status";
+
+            try {
+                const res = await fetch(contactForm.action, {
+                    method: "POST",
+                    body: new FormData(contactForm),
+                    headers: { Accept: "application/json" }
+                });
+
+                if (res.ok) {
+                    formStatus.textContent = "✓ Message sent! I'll get back to you soon.";
+                    formStatus.className = "form-status success";
+                    contactForm.reset();
+                } else {
+                    const data = await res.json();
+                    const errMsg = data.errors?.map(e => e.message).join(", ") || "Something went wrong.";
+                    throw new Error(errMsg);
+                }
+            } catch (err) {
+                formStatus.textContent = `✗ ${err.message}. Please email me directly at manishpaudel86@gmail.com`;
+                formStatus.className = "form-status error";
+            } finally {
+                btnText.classList.remove("hidden");
+                btnLoading.classList.add("hidden");
+                submitBtn.disabled = false;
+            }
+        });
+    }
+
 });
