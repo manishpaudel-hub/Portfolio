@@ -1,0 +1,525 @@
+/* --- Global Reset & Variables --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    scroll-behavior: smooth;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+/* Eye-Friendly Light Variables */
+:root {
+    --primary-color: #2563eb; 
+    --secondary-color: #1e293b; 
+    --light-bg: #f8fafc;
+    --text-color: #334155;
+    --white: #ffffff;
+    --navbar-bg: rgba(255, 255, 255, 0.95);
+    --card-bg: #f1f5f9;                 /* Matches light grey background from screenshot */
+    --card-border: transparent;
+    --form-bg: #f8fafc;
+    --switch-bg: #cbd5e1;
+    --switch-knob-bg: #ffffff;
+    --icon-sun-color: #eab308;
+    --icon-moon-color: #94a3b8;
+    --timeline-line-color: #cbd5e1;
+}
+
+/* Eye-Friendly Matte Dark Variables */
+[data-theme="dark"] {
+    --primary-color: #38bdf8;
+    --secondary-color: #f8fafc;
+    --light-bg: #121212;
+    --text-color: #cbd5e1;
+    --white: #1e1e1e;
+    --navbar-bg: rgba(24, 24, 24, 0.96);
+    --card-bg: #1e1e1e;                 /* Sleek dark cards */
+    --card-border: rgba(255, 255, 255, 0.08);
+    --form-bg: #2d2d2d;
+    --switch-bg: #334155;
+    --switch-knob-bg: #38bdf8;
+    --icon-sun-color: #475569;
+    --icon-moon-color: #38bdf8;
+    --timeline-line-color: #334155;
+}
+
+body {
+    background-color: var(--light-bg);
+    color: var(--text-color);
+    overflow-x: hidden;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 80px 20px;
+}
+
+.text-center { text-align: center; }
+.highlight { color: var(--primary-color); }
+
+.heading-line {
+    width: 60px;
+    height: 4px;
+    background-color: var(--primary-color);
+    margin: 10px auto 60px auto;
+    border-radius: 2px;
+}
+
+/* --- Header / Navbar Layout --- */
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: var(--navbar-bg);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 15px 20px;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--secondary-color);
+}
+.logo span { color: var(--primary-color); }
+
+/* Hidden on desktop wrapper */
+.nav-controls-mobile {
+    display: none;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    align-items: center;
+}
+
+.nav-links li { margin-left: 25px; }
+.nav-links a {
+    text-decoration: none;
+    color: var(--secondary-color);
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+.nav-links a:hover { color: var(--primary-color); }
+
+/* --- Theme Toggle Switch Design (With Symbols Adjacent) --- */
+.switch-wrapper-pc {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.custom-switch-btn {
+    position: relative;
+    width: 46px;
+    height: 24px;
+    background-color: var(--switch-bg);
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+}
+
+.switch-knob {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    background-color: var(--switch-knob-bg);
+    border-radius: 50%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    /* FIXED LOGIC: Light Mode is on the Left default position */
+    transform: translateX(2px); 
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* FIXED LOGIC: Dark Mode active forces moving circle knob to the Right */
+[data-theme="dark"] .switch-knob {
+    transform: translateX(24px);
+}
+
+.switch-label-icon {
+    font-size: 14px;
+}
+.switch-label-icon.sun { color: var(--icon-sun-color); }
+.switch-label-icon.moon { color: var(--icon-moon-color); }
+
+/* Hamburger Menu Icon */
+.menu-toggle {
+    display: none;
+    font-size: 22px;
+    background: none;
+    border: none;
+    color: var(--secondary-color);
+    cursor: pointer;
+}
+
+/* --- Buttons --- */
+.btn {
+    display: inline-block;
+    padding: 12px 28px;
+    background-color: var(--primary-color);
+    color: #ffffff !important;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(37, 99, 235, 0.3);
+}
+.btn.block { width: 100%; text-align: center; }
+
+/* --- Hero Showcase Section --- */
+.hero-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%);
+    padding-top: 80px;
+}
+[data-theme="dark"] .hero-section {
+    background: linear-gradient(135deg, #121212 0%, #1c1c1c 100%);
+}
+
+.hero-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    width: 100%;
+}
+
+.hero-text h1 {
+    font-size: 48px;
+    color: var(--secondary-color);
+    margin-bottom: 15px;
+}
+.hero-text p {
+    font-size: 20px;
+    margin-bottom: 30px;
+    color: #64748b;
+}
+
+
+.floating-box{
+    position:relative;
+
+    animation: float 4.5s ease-in-out infinite;
+}
+
+
+.glow{
+    position:absolute;
+
+    width:250px;
+    height:250px;
+
+    background:#00bfff;
+
+    border-radius:50%;
+
+    filter: blur(80px);
+
+    opacity:200;
+
+    top:50%;
+    left:50%;
+
+    transform:translate(-50%, -50%);
+
+        box-shadow:
+    0 0 40px #00bfff,
+    0 0 80px #00bfff,
+    0 0 120px #00bfff;
+}
+
+.hero-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+}
+
+.profile-pic {
+    width: 320px;
+    height: 320px;
+    object-fit: cover;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border: 1px solid #00bfff;
+    border-radius: 50%;
+    animation: float 4.5s ease-in-out infinite;
+}
+
+@keyframes float {
+
+    0%{
+        transform: translateY(0px);
+    }
+
+    50%{
+        transform: translateY(-30px);
+    }
+
+    100%{
+        transform: translateY(0px);
+    }
+}
+
+/* --- About Profile Layout --- */
+.about-section { background-color: var(--white); }
+.about-section p {
+    max-width: 800px;
+    margin: 0 auto;
+    font-size: 18px;
+    color: var(--text-color);
+}
+
+/* --- RE-CODED EDUCATION DESIGN MATCHING YOUR SCREENSHOT --- */
+.education-section {
+    background-color: var(--white);
+    position: relative;
+}
+[data-theme="dark"] .education-section {
+    background-color: var(--light-bg);
+}
+
+.screenshot-timeline {
+    position: relative;
+    max-width: 850px;
+    margin: 0 auto;
+    padding: 20px 0;
+}
+
+/* Vertical Center Line Spine */
+.timeline-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--timeline-line-color);
+    transform: translateX(-50%);
+}
+
+.timeline-item {
+    position: relative;
+    width: 50%;
+    margin-bottom: 30px;
+}
+
+/* Center circle Node Dots */
+.timeline-dot {
+    position: absolute;
+    right: -7px;
+    top: 25px;
+    width: 14px;
+    height: 14px;
+    background-color: #3b82f6;
+    border-radius: 50%;
+    z-index: 5;
+}
+.timeline-item.right .timeline-dot {
+    left: -7px;
+    right: auto;
+}
+
+/* Content cards setup styling */
+.timeline-content-card {
+    background-color: var(--card-bg);
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid var(--card-border);
+    width: 90%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.timeline-item.left {
+    left: 0;
+    display: flex;
+    justify-content: flex-start;
+}
+.timeline-item.right {
+    left: 50%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.timeline-content-card h3 {
+    font-size: 16px;
+    color: var(--secondary-color);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+.timeline-content-card .institute {
+    font-size: 14px;
+    color: #3b82f6;              /* Precise blue color match from upload picture */
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+.timeline-content-card .status-date {
+    font-size: 12px;
+    color: #718096;
+    margin-bottom: 12px;
+}
+.timeline-content-card .desc {
+    font-size: 14px;
+    color: var(--text-color);
+    line-height: 1.5;
+}
+
+/* --- Contact & App Handlers --- */
+.contact-section { background-color: var(--white); }
+[data-theme="dark"] .contact-section { background-color: var(--white); }
+.contact-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 50px;
+    margin-top: 20px;
+}
+
+.contact-info h3 { font-size: 24px; color: var(--secondary-color); margin-bottom: 15px; }
+.contact-info p { margin-bottom: 25px; }
+
+.info-item-link { text-decoration: none; color: inherit; }
+.info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 12px;
+    border-radius: 8px;
+}
+.info-item-link:hover .info-item {
+    background-color: var(--light-bg);
+    color: var(--primary-color);
+}
+.info-item i { font-size: 20px; color: var(--primary-color); margin-right: 15px; }
+
+.socials a {
+    font-size: 24px;
+    color: var(--secondary-color);
+    margin-right: 20px;
+}
+.socials a:hover { color: var(--primary-color); }
+
+.contact-form .form-group { margin-bottom: 20px; }
+.contact-form input, .contact-form textarea {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+    background-color: var(--form-bg);
+    color: var(--text-color);
+}
+.contact-form input:focus, .contact-form textarea:focus { border-color: var(--primary-color); }
+
+/* --- Footer Area --- */
+footer {
+    background-color: #111827;
+    color: #94a3b8;
+    padding: 30px 20px;
+}
+
+/* --- Scroll Animation Framework --- */
+.pop-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.pop-up.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* --- MOBILE & LAPTOP RESPONSIVE MEDIA BREAKPOINTS --- */
+@media (max-width: 768px) {
+    .container { padding: 50px 20px; }
+    
+    /* Config Layout swaps: Display mobile controls, activate layout toggling views */
+    .pc-theme-li { display: none; }
+    .menu-toggle { display: block; }
+    .nav-controls-mobile { display: flex; }
+
+    /* Order Adjustments: Switch on left, Logo middle, Controls right */
+    .navbar {
+        padding: 12px 15px;
+    }
+    .menu-toggle { order: 1; }
+    .logo { order: 2; margin-left: 15px; margin-right: auto;}
+    .nav-controls-mobile { order: 3; }
+
+    .heading-line { margin-bottom: 45px; }
+
+    /* FIXED: Mobile Navigation Menu takes up only 70% space partial size width drawer */
+    .nav-links {
+        position: absolute;
+        top: 60px;
+        left: -100%;
+        width: 70%; /* Takes only partial screen width portion as requested */
+        height: calc(100vh - 60px);
+        background-color: var(--navbar-bg);
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 40px 30px;
+        transition: left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.1);
+        border-top: 1px solid var(--card-border);
+    }
+    
+    .nav-links.mobile-active { left: 0; }
+    .nav-links li { margin: 15px 0; margin-left: 0; }
+    .nav-links a { font-size: 18px; width: 100%; }
+
+    /* Hero Responsive Blocks */
+    .hero-container {
+        flex-direction: column-reverse;
+        text-align: center;
+        padding-top: 20px;
+        gap: 15px;
+    }
+    .hero-text h1 { font-size: 30px; }
+    .hero-text p { font-size: 16px; }
+    
+    .hero-image { max-width: 240px; margin-bottom: 10px; }
+    .profile-pic { width: 100%; height: auto; max-width: 240px; }
+
+    /* Convert Education Spine Timeline layout to single linear full-column block row on mobile */
+    .timeline-line { left: 16px; }
+    .timeline-item { width: 100%; margin-bottom: 25px; }
+    .timeline-item.left, .timeline-item.right { left: 0; justify-content: flex-end; }
+    .timeline-content-card { width: calc(100% - 35px); }
+    .timeline-dot { left: 9px !important; right: auto !important; top: 22px; }
+
+    /* Form contact layout */
+    .contact-container { grid-template-columns: 1fr; gap: 35px; }
+    .contact-info { text-align: center; }
+    .info-item { justify-content: center; }
+}
+
+@media (max-width: 480px) {
+    .nav-links { width: 80%; } /* Handles ultra small device screen portions cleanly */
+    .hero-text h1 { font-size: 24px; }
+    .hero-image, .profile-pic { max-width: 180px; }
+}
