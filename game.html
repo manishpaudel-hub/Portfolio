@@ -497,6 +497,7 @@ canvas {
 /* Mobile Controls */
 #mobile-controls {
     display: none;
+    pointer-events: auto; /* <--- Allows touches/clicks to register on the buttons */
 }
 
 #joystick-outer-ring {
@@ -723,6 +724,7 @@ canvas {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ===== CORE BATTLEWORLD INFRASTRUCTURE & STATE ENGINE DATA MATRICES =====
+// ===== CORE BATTLEWORLD INFRASTRUCTURE & STATE ENGINE DATA MATRICES =====
 const G = {
     scene: null, camera: null, renderer: null, clock: null,
     player: {
@@ -741,35 +743,24 @@ const G = {
     inputKeys: {}, sensitivity: 0.006, aiAgents: [], localizedTracers: [], localizedLootCaches: [], structuralMapBarricades: [],
     killStreakCounter: 0, operationalDamageTotal: 0, statisticalShotsFired: 0, statisticalShotsLanded: 0, executionStartTime: 0, alive: true, gameStarted: false,
     zoneCurrentRadius: 500, zoneTargetRadius: 500, zoneCenter: new THREE.Vector2(0, 0), zoneCountdownTimer: 60, zoneShrinkProcessing: false, localizedZoneDamageClock: 0,
-    mapSizeExtent: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
-    ? 450
-    : 800, baseGridMeshes: [], obstacleStructuralColliders: [], dynamicCombatParticles: [], interfaceMapRadarCtx: null,
+    mapSizeExtent: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 450 : 800, baseGridMeshes: [], obstacleStructuralColliders: [], dynamicCombatParticles: [], interfaceMapRadarCtx: null,
     cameraShakeIntensity: 0, cameraShakeDuration: 0, targetLootInteractivityFocus: null, executionLastTimestamp: 0
 };
 
 // ===== DATA DRIVEN HARDWARE ENGINE GRAPHICS PLATFORM CONFIGURATION =====
-// 🌤️ Sky light (soft global illumination feel)
-// 1. Initialize the Scene and Camera first
 G.scene = new THREE.Scene();
 G.scene.background = new THREE.Color(0x4FC3F7);
 G.scene.fog = new THREE.FogExp2(0x81D4FA, 0.001);
 
-G.camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1200
-);
+G.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1200);
 G.camera.position.set(G.player.position.x, G.player.position.y, G.player.position.z);
 
-// 2. Now create your lights
 const hemi = new THREE.HemisphereLight(0xbfdfff, 0x2b3a67, 1.2);
 G.scene.add(hemi);
 
 const sun = new THREE.DirectionalLight(0xffffff, 4.0);
 sun.position.set(200, 300, 100);
 sun.castShadow = true;
-
 sun.shadow.mapSize.width = 2048;
 sun.shadow.mapSize.height = 2048;
 sun.shadow.camera.near = 1;
@@ -779,106 +770,77 @@ sun.shadow.camera.right = 400;
 sun.shadow.camera.top = 400;
 sun.shadow.camera.bottom = -400;
 
-    G.scene.background = new THREE.Color(0x4FC3F7);
-    G.scene.fog = new THREE.FogExp2(0x81D4FA, 0.001);
-    
-    G.camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1200
-);
-
 G.scene.add(hemi);
 G.scene.add(sun);
 
-    G.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: false });
-    G.renderer.setSize(window.innerWidth, window.innerHeight);
-    if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+G.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', alpha: false });
+G.renderer.setSize(window.innerWidth, window.innerHeight);
+if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
     G.renderer.setPixelRatio(0.7);
 } else {
     G.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.25));
 }
-    G.renderer.shadowMap.enabled =
-    !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-    G.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    G.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    G.renderer.toneMappingExposure = 1.15;
-    
-    document.body.insertBefore(G.renderer.domElement, document.getElementById('ui'));
-    
-    // Advanced atmospheric environment setup
-    const atmosphericHemisphereLight = new THREE.HemisphereLight(0x7489a8, 0x111622, 0.75);
-    G.scene.add(atmosphericHemisphereLight);
-    
-    const tacticalSolarLight = new THREE.DirectionalLight(0xffffff, 2.8);
-    tacticalSolarLight.position.set(220, 180, 140);
-    tacticalSolarLight.castShadow = true;
-    if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+G.renderer.shadowMap.enabled = !/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+G.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+G.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+G.renderer.toneMappingExposure = 1.15;
+
+document.body.insertBefore(G.renderer.domElement, document.getElementById('ui'));
+
+const atmosphericHemisphereLight = new THREE.HemisphereLight(0x7489a8, 0x111622, 0.75);
+G.scene.add(atmosphericHemisphereLight);
+
+const tacticalSolarLight = new THREE.DirectionalLight(0xffffff, 2.8);
+tacticalSolarLight.position.set(220, 180, 140);
+tacticalSolarLight.castShadow = true;
+if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
     tacticalSolarLight.shadow.mapSize.width = 256;
     tacticalSolarLight.shadow.mapSize.height = 256;
-    } else {
+} else {
     tacticalSolarLight.shadow.mapSize.width = 1024;
     tacticalSolarLight.shadow.mapSize.height = 1024;
-    }
-    tacticalSolarLight.shadow.camera.near = 0.5;
-    tacticalSolarLight.shadow.camera.far = 800;
-    
-    const mapOrthoBoundary = 400;
-    tacticalSolarLight.shadow.camera.left = -mapOrthoBoundary;
-    tacticalSolarLight.shadow.camera.right = mapOrthoBoundary;
-    tacticalSolarLight.shadow.camera.top = mapOrthoBoundary;
-    tacticalSolarLight.shadow.camera.bottom = -mapOrthoBoundary;
-    tacticalSolarLight.shadow.bias = -0.0006;
-    G.scene.add(tacticalSolarLight);
-    
-    G.interfaceMapRadarCtx = document.getElementById('radar-canvas').getContext('2d');
-    G.clock = new THREE.Clock();
-    
-    window.addEventListener('resize', executeGraphicsResizeResolution);
+}
+tacticalSolarLight.shadow.camera.near = 0.5;
+tacticalSolarLight.shadow.camera.far = 800;
 
+const mapOrthoBoundary = 400;
+tacticalSolarLight.shadow.camera.left = -mapOrthoBoundary;
+tacticalSolarLight.shadow.camera.right = mapOrthoBoundary;
+tacticalSolarLight.shadow.camera.top = mapOrthoBoundary;
+tacticalSolarLight.shadow.camera.bottom = -mapOrthoBoundary;
+tacticalSolarLight.shadow.bias = -0.0006;
+G.scene.add(tacticalSolarLight);
+
+G.interfaceMapRadarCtx = document.getElementById('radar-canvas').getContext('2d');
+G.clock = new THREE.Clock();
+
+window.addEventListener('resize', executeGraphicsResizeResolution);
 
 // ===== REALISTIC ARCHITECTURAL WORLD GENERATION PIPELINE =====
 function buildTacticalSimulationWorld() {
-    // Ground plane styling
-const matrixTerrainGeo = new THREE.PlaneGeometry(G.mapSizeExtent * 2, G.mapSizeExtent * 2, 64, 64);
-
-const detailGeo = new THREE.PlaneGeometry(G.mapSizeExtent * 2, G.mapSizeExtent * 2, 64, 64);
-
-const detailMat = new THREE.MeshStandardMaterial({
-    color: 0x4caf50,
-    roughness: 1,
-    metalness: 0
-});
-
-const detailGround = new THREE.Mesh(detailGeo, detailMat);
-detailGround.rotation.x = -Math.PI / 2;
-detailGround.position.y = 0.01;
-G.scene.add(detailGround);
+    const matrixTerrainGeo = new THREE.PlaneGeometry(G.mapSizeExtent * 2, G.mapSizeExtent * 2, 64, 64);
+    const detailGeo = new THREE.PlaneGeometry(G.mapSizeExtent * 2, G.mapSizeExtent * 2, 64, 64);
+    const detailMat = new THREE.MeshStandardMaterial({ color: 0x4caf50, roughness: 1, metalness: 0 });
+    const detailGround = new THREE.Mesh(detailGeo, detailMat);
+    detailGround.rotation.x = -Math.PI / 2;
+    detailGround.position.y = 0.01;
+    G.scene.add(detailGround);
     matrixTerrainGeo.rotateX(-Math.PI / 2);
     
-    const matrixTerrainMat = new THREE.MeshStandardMaterial({
-color: 0x5fbf6a,
-roughness: 1,
-metalness: 0.0
-
-    });
+    const matrixTerrainMat = new THREE.MeshStandardMaterial({ color: 0x5fbf6a, roughness: 1, metalness: 0.0 });
     matrixTerrainMat.vertexColors = true;
     const worldSurfaceMesh = new THREE.Mesh(matrixTerrainGeo, matrixTerrainMat);
     worldSurfaceMesh.receiveShadow = true;
     G.scene.add(worldSurfaceMesh);
     G.baseGridMeshes.push(worldSurfaceMesh);
     
-    // Generate complex buildings and scatter obstacles
     procedurallyGenerateStructures();
 }
 
 function procedurallyGenerateStructures() {
-    // High-fidelity structural placement across quadrants
     const mobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-
-for (let x = mobile ? -180 : -250; x <= (mobile ? 180 : 250); x += 120) {
-    for (let z = -250; z <= 250; z += 120) {
+    for (let x = mobile ? -180 : -250; x <= (mobile ? 180 : 250); x += 120) {
+        for (let z = -250; z <= 250; z += 120) {
             if (Math.abs(x) > 20 || Math.abs(z) > 20) {
                 if (Math.random() < 0.8) {
                     const offsetVarianceX = x + (Math.random() - 0.5) * 40;
@@ -888,14 +850,9 @@ for (let x = mobile ? -180 : -250; x <= (mobile ? 180 : 250); x += 120) {
             }
         }
     }
-    
-    // Scatter realistic scatter-cover objects (barricades, concrete blocks, stackable shipping boxes)
-    const obstacleCount =
-    /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
-        ? 45
-        : 140;
 
-for (let i = 0; i < obstacleCount; i++) {
+    const obstacleCount = mobile ? 45 : 140;
+    for (let i = 0; i < obstacleCount; i++) {
         let rx = (Math.random() - 0.5) * G.mapSizeExtent * 1.2;
         let rz = (Math.random() - 0.5) * G.mapSizeExtent * 1.2;
         if (Math.sqrt(rx*rx + rz*rz) > 25) {
@@ -909,61 +866,34 @@ for (let i = 0; i < obstacleCount; i++) {
             }
         }
     }
-    
-    // Drop survival gear storage elements
     populateStrategicLootCaches();
 }
 
 function procedurallyAssembleComplexBuilding(posX, posZ) {
     const buildingGroup = new THREE.Group();
     buildingGroup.position.set(posX, 0, posZ);
-    
     const buildingWidth = 20 + Math.random() * 12;
     const buildingDepth = 20 + Math.random() * 12;
-    const structuralFloorsCount = Math.floor(Math.random() * 4) + 2; 
+    const structuralFloorsCount = Math.floor(Math.random() * 4) + 2;
     const operationalFloorHeight = 4.5;
     
-    // Multi-layered standard physical definitions for concrete structures
-const textureLoader = new THREE.TextureLoader();
-
-const concreteTexture = textureLoader.load('https://threejs.org/examples/textures/brick_diffuse.jpg');
-concreteTexture.wrapS = concreteTexture.wrapT = THREE.RepeatWrapping;
-concreteTexture.repeat.set(2, 2);
-
-const concreteExteriorMat = new THREE.MeshStandardMaterial({
-    map: concreteTexture,
-    roughness: 0.9,
-    metalness: 0.05
-});
+    const textureLoader = new THREE.TextureLoader();
+    const concreteTexture = textureLoader.load('https://threejs.org/examples/textures/brick_diffuse.jpg');
+    concreteTexture.wrapS = concreteTexture.wrapT = THREE.RepeatWrapping;
+    concreteTexture.repeat.set(2, 2);
+    const concreteExteriorMat = new THREE.MeshStandardMaterial({ map: concreteTexture, roughness: 0.9, metalness: 0.05 });
     const pillarSteelMat = new THREE.MeshStandardMaterial({ color: 0x607D8B, roughness: 0.4, metalness: 0.75 });
-   const reflectiveGlassMat = new THREE.MeshPhysicalMaterial({
-    color: 0x9fdfff,
-    roughness: 0.05,
-    metalness: 0.0,
-
-    transmission: 1.0,   // light passes through (REAL glass effect)
-    transparent: true,
-    opacity: 0.6,
-
-    thickness: 0.8,
-    ior: 1.5,            // refraction index (glass bending light)
-
-    emissive: 0x0a1a2a,
-    emissiveIntensity: 0.2
-});
+    const reflectiveGlassMat = new THREE.MeshPhysicalMaterial({ color: 0x9fdfff, roughness: 0.05, metalness: 0.0, transmission: 1.0, transparent: true, opacity: 0.6, thickness: 0.8, ior: 1.5, emissive: 0x0a1a2a, emissiveIntensity: 0.2 });
     
     for (let f = 0; f < structuralFloorsCount; f++) {
         const elevationY = f * operationalFloorHeight;
-        
-        // Floor foundation slab block
         const foundationGeo = new THREE.BoxGeometry(buildingWidth + 0.6, 0.4, buildingDepth + 0.6);
         const foundationMesh = new THREE.Mesh(foundationGeo, concreteExteriorMat);
         foundationMesh.position.set(0, elevationY + 0.2, 0);
         foundationMesh.castShadow = true;
         foundationMesh.receiveShadow = true;
         buildingGroup.add(foundationMesh);
-        
-        // Solid structural corners pillars
+
         const pillarGeo = new THREE.BoxGeometry(0.8, operationalFloorHeight, 0.8);
         const alignments = [
             [-buildingWidth/2, buildingDepth/2], [buildingWidth/2, buildingDepth/2],
@@ -975,34 +905,28 @@ const concreteExteriorMat = new THREE.MeshStandardMaterial({
             pillarMesh.castShadow = true;
             buildingGroup.add(pillarMesh);
         });
-        
-        // Wall boundaries segments featuring window cavities
+
         const wallSegmentHeight = operationalFloorHeight - 0.4;
         const wallThickness = 0.4;
-        
-        // North & South walls assembly loops
+
         for (let side = -1; side <= 1; side += 2) {
             const zLocation = (buildingDepth / 2) * side;
-            // Left block panels
             const outerPanelGeo = new THREE.BoxGeometry(buildingWidth * 0.35, wallSegmentHeight, wallThickness);
             const leftPanelMesh = new THREE.Mesh(outerPanelGeo, concreteExteriorMat);
             leftPanelMesh.position.set(-buildingWidth * 0.325, elevationY + 0.4 + wallSegmentHeight/2, zLocation);
             leftPanelMesh.castShadow = true;
             leftPanelMesh.receiveShadow = true;
             buildingGroup.add(leftPanelMesh);
-            
             const rightPanelMesh = leftPanelMesh.clone();
             rightPanelMesh.position.x = buildingWidth * 0.325;
             buildingGroup.add(rightPanelMesh);
-            
-            // Central glass matrix screen array
+
             const structuralWindowGeo = new THREE.BoxGeometry(buildingWidth * 0.3, wallSegmentHeight * 0.7, wallThickness + 0.1);
             const glassPanelMesh = new THREE.Mesh(structuralWindowGeo, reflectiveGlassMat);
             glassPanelMesh.position.set(0, elevationY + 0.4 + wallSegmentHeight * 0.5, zLocation);
             buildingGroup.add(glassPanelMesh);
         }
-        
-        // East & West walls assembly loops
+
         for (let side = -1; side <= 1; side += 2) {
             const xLocation = (buildingWidth / 2) * side;
             const sidePanelGeo = new THREE.BoxGeometry(wallThickness, wallSegmentHeight, buildingDepth);
@@ -1013,974 +937,849 @@ const concreteExteriorMat = new THREE.MeshStandardMaterial({
             buildingGroup.add(sideWallMesh);
         }
     }
-    
-    // Rooftop perimeter industrial barrier rails
+
     const topElevation = structuralFloorsCount * operationalFloorHeight;
     const perimeterBarGeo = new THREE.BoxGeometry(buildingWidth, 1.1, 0.3);
     const roofFenceN = new THREE.Mesh(perimeterBarGeo, concreteExteriorMat);
     roofFenceN.position.set(0, topElevation + 0.55, buildingDepth/2);
     buildingGroup.add(roofFenceN);
-    
     const roofFenceS = roofFenceN.clone();
     roofFenceS.position.z = -buildingDepth/2;
     buildingGroup.add(roofFenceS);
-    
+
+    const boundingBoxCollider = new THREE.Box3().setFromObject(buildingGroup);
+    G.obstacleStructuralColliders.push(boundingBoxCollider);
     G.scene.add(buildingGroup);
-    
-    // Register physical footprints into structural arrays for perfect collision mitigation geometry
-    G.obstacleStructuralColliders.push({
-        originX: posX, originZ: posZ,
-        halfW: buildingWidth / 2 + 0.8,
-        halfD: buildingDepth / 2 + 0.8,
-        heightMax: topElevation
-    });
 }
 
 function createConcreteCombatBarricade(x, z) {
-    const geo = new THREE.BoxGeometry(5, 1.6, 1.2);
-    const mat = new THREE.MeshStandardMaterial({ color: 0xFF5722, roughness: 0.9, metalness: 0.1 });
-    const barrierMesh = new THREE.Mesh(geo, mat);
-    barrierMesh.position.set(x, 0.8, z);
-    barrierMesh.rotation.y = Math.random() * Math.PI;
-    barrierMesh.castShadow = true;
-    barrierMesh.receiveShadow = true;
-    G.scene.add(barrierMesh);
-    
-    G.obstacleStructuralColliders.push({
-        originX: x, originZ: z, halfW: 2.8, halfD: 1.2, heightMax: 1.8
-    });
+    const bGroup = new THREE.Group();
+    bGroup.position.set(x, 0, z);
+    bGroup.rotation.y = Math.random() * Math.PI;
+    const baseGeo = new THREE.BoxGeometry(6, 1.6, 1.2);
+    const baseMat = new THREE.MeshStandardMaterial({ color: 0x7e8c8d, roughness: 0.95 });
+    const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+    baseMesh.position.y = 0.8;
+    baseMesh.castShadow = true;
+    baseMesh.receiveShadow = true;
+    bGroup.add(baseMesh);
+    G.obstacleStructuralColliders.push(new THREE.Box3().setFromObject(bGroup));
+    G.scene.add(bGroup);
 }
 
+// Global mobile joystick state capture properties
+let joystickTrackingTouchId = null;
+const joystickPositionOrigin = new THREE.Vector2();
+const joystickCurrentVector = new THREE.Vector2();
+
 function createMilitaryShippingCrate(x, z) {
-    const boxGroup = new THREE.Group();
-    boxGroup.position.set(x, 1.1, z);
-    boxGroup.rotation.y = Math.random() * Math.PI;
-    
-    const containerGeo = new THREE.BoxGeometry(2.2, 2.2, 4.5);
-    const containerMat = new THREE.MeshStandardMaterial({ color: 0xFFD600, roughness: 0.5, metalness: 0.8 });
-    const boxMesh = new THREE.Mesh(containerGeo, containerMat);
-    boxMesh.castShadow = true;
-    boxMesh.receiveShadow = true;
-    boxGroup.add(boxMesh);
-    
-    G.scene.add(boxGroup);
-    G.obstacleStructuralColliders.push({
-        originX: x, originZ: z, halfW: 1.8, halfD: 2.5, heightMax: 2.3
-    });
+    const geo = new THREE.BoxGeometry(4.5, 4.5, 4.5);
+    const mat = new THREE.MeshStandardMaterial({ color: 0x27ae60, roughness: 0.7, metalness: 0.4 });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(x, 2.25, z);
+    mesh.rotation.y = Math.random() * Math.PI;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    G.obstacleStructuralColliders.push(new THREE.Box3().setFromObject(mesh));
+    G.scene.add(mesh);
 }
 
 function createIndustrialTankObstacle(x, z) {
-    const tankGeo = new THREE.CylinderGeometry(1.5, 1.5, 5, 12);
-    const tankMat = new THREE.MeshStandardMaterial({ color: 0xE040FB, roughness: 0.4, metalness: 0.7 });
-    const tankMesh = new THREE.Mesh(tankGeo, tankMat);
-    tankMesh.position.set(x, 2.5, z);
-    tankMesh.castShadow = true;
-    tankMesh.receiveShadow = true;
-    G.scene.add(tankMesh);
-    
-    G.obstacleStructuralColliders.push({
-        originX: x, originZ: z, halfW: 1.8, halfD: 1.8, heightMax: 5.0
-    });
+    const tankGroup = new THREE.Group();
+    tankGroup.position.set(x, 0, z);
+    const cyGeo = new THREE.CylinderGeometry(2, 2, 7, 16);
+    const cyMat = new THREE.MeshStandardMaterial({ color: 0xd35400, roughness: 0.5, metalness: 0.6 });
+    const mesh = new THREE.Mesh(cyGeo, cyMat);
+    mesh.position.y = 3.5;
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    tankGroup.add(mesh);
+    G.obstacleStructuralColliders.push(new THREE.Box3().setFromObject(tankGroup));
+    G.scene.add(tankGroup);
 }
 
 function populateStrategicLootCaches() {
-    const gearCatalogs = [
-        { trackingType: 'weapon', label: 'AKM Tactical', profileHex: 0xffaa00 },
-        { trackingType: 'weapon', label: 'M40 Bolt-Action', profileHex: 0xff4757 },
-        { trackingType: 'weapon', label: 'Vector SMG', profileHex: 0x00e5ff },
-        { trackingType: 'health', label: 'Hyper-Medkit Phoenix', profileHex: 0x2ed573 },
-        { trackingType: 'armor', label: 'Kevlar Plating Matrix', profileHex: 0x54a0ff }
-    ];
-    
-    const lootCount = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 20 : 90;
-
-for (let i = 0; i < lootCount; i++) {
-        let x = (Math.random() - 0.5) * G.mapSizeExtent * 1.3;
-        let rz = (Math.random() - 0.5) * G.mapSizeExtent * 1.3;
-        
-        let targetChoice = gearCatalogs[Math.floor(Math.random() * gearCatalogs.length)];
-        
-        const masterContainer = new THREE.Group();
-        masterContainer.position.set(x, 0.35, rz);
-        
-        const coreGeo = new THREE.BoxGeometry(1.1, 0.7, 0.7);
-        const coreMat = new THREE.MeshStandardMaterial({
-            color: targetChoice.profileHex,
-            emissive: targetChoice.profileHex,
-            emissiveIntensity: 0.5,
-            metalness: 0.8,
-            roughness: 0.2
-        });
-        
-        const physicalBox = new THREE.Mesh(coreGeo, coreMat);
-        physicalBox.castShadow = true;
-        masterContainer.add(physicalBox);
-        
-        // Soft operational locator lighting indicator ring
-        const glowPointGeo = new THREE.SphereGeometry(0.08, 6, 6);
-        const glowPointMat = new THREE.MeshBasicMaterial({ color: targetChoice.profileHex });
-        const indicatorLight = new THREE.Mesh(glowPointGeo, glowPointMat);
-        indicatorLight.position.set(0, 0.6, 0);
-        masterContainer.add(indicatorLight);
-        
-        G.scene.add(masterContainer);
-        G.localizedLootCaches.push({
-            meshNode: masterContainer, coordinateX: x, coordinateZ: rz,
-            category: targetChoice.trackingType, payloadLabel: targetChoice.label, activeState: true
-        });
+    const count = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 15 : 40;
+    for (let i = 0; i < count; i++) {
+        let lx = (Math.random() - 0.5) * G.mapSizeExtent * 1.4;
+        let lz = (Math.random() - 0.5) * G.mapSizeExtent * 1.4;
+        if (Math.sqrt(lx*lx + lz*lz) > 15) {
+            const cacheGeo = new THREE.BoxGeometry(1.8, 1, 1.2);
+            const cacheMat = new THREE.MeshStandardMaterial({ color: 0xffa500, roughness: 0.3, metalness: 0.8, emissive: 0xffa500, emissiveIntensity: 0.15 });
+            const cacheMesh = new THREE.Mesh(cacheGeo, cacheMat);
+            cacheMesh.position.set(lx, 0.5, lz);
+            cacheMesh.castShadow = true;
+            
+            const weaponsAvailablePool = [1, 2, 3];
+            const chosenWeaponRef = weaponsAvailablePool[Math.floor(Math.random() * weaponsAvailablePool.length)];
+            
+            G.localizedLootCaches.push({ mesh: cacheMesh, weaponIdx: chosenWeaponRef, contentsRevealedLabel: G.arsenal[chosenWeaponRef].name, spent: false });
+            G.scene.add(cacheMesh);
+        }
     }
 }
 
-// ===== REALISTIC COMPOUND SOLDIER ENEMY RIGS (BOT ENGINE) =====
 function constructAIAgentBots() {
-    let requestedCount = parseInt(document.getElementById('param-bots').value) || 20;
-
-if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
-    requestedCount = Math.min(requestedCount, 3);
-}
-    G.aiAgents = [];
+    const totalCount = parseInt(document.getElementById('param-bots').value) || 20;
+    const diff = document.getElementById('param-difficulty').value;
+    let shootingIntervalWindow = 1.5;
+    let scanningAccuracyBase = 0.04;
     
-    for (let i = 0; i < requestedCount; i++) {
-        const x = (Math.random() - 0.5) * G.mapSizeExtent * 0.9;
-        const z = (Math.random() - 0.5) * G.mapSizeExtent * 0.9;
+    if (diff === 'Recruit') { shootingIntervalWindow = 2.4; scanningAccuracyBase = 0.07; }
+    else if (diff === 'Hardened') { shootingIntervalWindow = 0.9; scanningAccuracyBase = 0.025; }
+    else if (diff === 'Tier-1 Elite') { shootingIntervalWindow = 0.5; scanningAccuracyBase = 0.01; }
+    
+    for (let i = 0; i < totalCount; i++) {
+        const botModelGroup = new THREE.Group();
+        const baseColorSeed = [0x95a5a6, 0x34495e, 0x2c3e50, 0x7f8c8d][Math.floor(Math.random() * 4)];
         
-        // Assemble complex composite humanoid skeletal mesh grouping
-        const automatedSoldierGroup = new THREE.Group();
+        const coreBodyMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 1.8, 12), new THREE.MeshStandardMaterial({ color: baseColorSeed, roughness: 0.6 }));
+        coreBodyMesh.position.y = 0.9;
+        coreBodyMesh.castShadow = true;
+        botModelGroup.add(coreBodyMesh);
         
-        // Core structural components definitions
-        const urbanVestMat = new THREE.MeshStandardMaterial({ color: 0xFF1744, roughness: 0.7, metalness: 0.3 });
-        const ballisticHelmetMat = new THREE.MeshStandardMaterial({ color: 0x2979FF, roughness: 0.5, metalness: 0.6 });
-        const skinMat = new THREE.MeshStandardMaterial({ color: 0xffdbac, roughness: 0.6 });
-        const weaponryBarSteelMat = new THREE.MeshStandardMaterial({ color: 0x0f1115, roughness: 0.3, metalness: 0.8 });
+        const visionVisorMesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.2, 0.4), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+        visionVisorMesh.position.set(0, 1.5, 0.4);
+        botModelGroup.add(visionVisorMesh);
         
-        // Body torso module box definition
-        const bodyTorsoMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.0, 0.45), urbanVestMat);
-        bodyTorsoMesh.position.y = 1.1;
-        bodyTorsoMesh.castShadow = true;
-        bodyTorsoMesh.receiveShadow = true;
-        automatedSoldierGroup.add(bodyTorsoMesh);
+        let spawnedValid = false;
+        let rx = 0, rz = 0;
+        while (!spawnedValid) {
+            rx = (Math.random() - 0.5) * G.mapSizeExtent * 1.5;
+            rz = (Math.random() - 0.5) * G.mapSizeExtent * 1.5;
+            if (Math.sqrt(rx*rx + rz*rz) > 35) spawnedValid = true;
+        }
         
-        // Head with tactical armor helmet system
-        const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.24, 10, 10), skinMat);
-        headMesh.position.set(0, 1.74, 0);
-        automatedSoldierGroup.add(headMesh);
+        botModelGroup.position.set(rx, 0, rz);
+        G.scene.add(botModelGroup);
         
-        const helmetMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.28, 0.16, 10), ballisticHelmetMat);
-        helmetMesh.position.set(0, 1.84, 0);
-        automatedSoldierGroup.add(helmetMesh);
-        
-        // Separated procedural operational leg structures arrays
-        const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.6, 8), urbanVestMat);
-        leftLeg.position.set(-0.24, 0.3, 0);
-        leftLeg.castShadow = true;
-        automatedSoldierGroup.add(leftLeg);
-        
-        const rightLeg = leftLeg.clone();
-        rightLeg.position.x = 0.24;
-        automatedSoldierGroup.add(rightLeg);
-        
-        // Arm structures aligned with firearm elements
-        const armLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.65, 8), urbanVestMat);
-        armLeft.position.set(-0.48, 1.1, 0);
-        armLeft.castShadow = true;
-        automatedSoldierGroup.add(armLeft);
-        
-        const armRight = armLeft.clone();
-        armRight.position.x = 0.48;
-        automatedSoldierGroup.add(armRight);
-        
-        // Modeled primary combat barrel line weapon asset
-        const combatRifleMesh = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 0.95), weaponryBarSteelMat);
-        combatRifleMesh.position.set(0.28, 1.0, -0.4);
-        automatedSoldierGroup.add(combatRifleMesh);
-        
-        automatedSoldierGroup.position.set(x, 0, z);
-        G.scene.add(automatedSoldierGroup);
-        
-        // Map data attributes into active deployment registries
         G.aiAgents.push({
-            meshGroup: automatedSoldierGroup, coordinateX: x, coordinateZ: z,
-            leftLegNode: leftLeg, rightLegNode: rightLeg, leftArmNode: armLeft, rightArmNode: armRight, weaponNode: combatRifleMesh,
-            yawAngle: Math.random() * Math.PI * 2, vitalityHP: 100, protectionArmor: 40, activeAlive: true,
-            identityName: 'Operator_' + (Math.floor(Math.random() * 900) + 100), operationalState: 'patrol',
-            patrolTarget: new THREE.Vector2(x + (Math.random() - 0.5) * 80, z + (Math.random() - 0.5) * 80),
-            timestampLastFired: 0, kineticMovementVelocity: 3.0, visualDetectionRange: 55,
-            assignedWeapon: G.arsenal[Math.floor(Math.random() * G.arsenal.length)], animatedTickMultiplier: Math.random() * 10
+            id: i, mesh: botModelGroup, hp: 100,
+            velocity: new THREE.Vector3(0, 0, 0),
+            targetWaypoint: new THREE.Vector3(),
+            waypointTimeExpiration: 0,
+            lastAttackTimeTracker: 0,
+            attackDelayWindow: shootingIntervalWindow,
+            accuracyOffsetVariance: scanningAccuracyBase,
+            stateCycleDirective: 'RECON_PATROL',
+            alive: true
         });
     }
     document.getElementById('roster-count-val').textContent = G.aiAgents.length + 1;
 }
 
-// ===== SYNCHRONIZED CORE PLATFORM INPUT SYSTEMS (PC FLUIDITY & CUSTOM MOBILE HUD) =====
-G.scene.fog = new THREE.FogExp2(0x9fd3ff, 0.0008);
-    // Desktop keyboard registration loop maps
-    document.addEventListener('keydown', e => {
-        G.inputKeys[e.code] = true;
-        if (e.code === 'KeyR') executeActiveReloadWorkflow();
-        if (e.code === 'KeyF') executeLootCollectionWorkflow();
-        if (e.code === 'Space' && G.player.onGround) triggerPlayerJumpAction();
-        if (['Digit1', 'Digit2', 'Digit3', 'Digit4'].includes(e.code)) {
-            switchWeaponSlotIndex(parseInt(e.key) - 1);
+// ===== REAL-TIME INPUTS EVENT LISTENERS & CAPTURING =====
+function setupTacticalInputBinds() {
+    window.addEventListener('keydown', e => { G.inputKeys[e.key.toLowerCase()] = true; if (e.key >= '1' && e.key <= '4') swapSelectedArsenalWeapon(parseInt(e.key) - 1); if (e.key.toLowerCase() === 'r') initiateWeaponReloadSequence(); if (e.key.toLowerCase() === 'f') executeContextualInteraction(); });
+    window.addEventListener('keyup', e => { G.inputKeys[e.key.toLowerCase()] = false; });
+    
+    window.addEventListener('mousemove', e => {
+        if (document.pointerLockElement === G.renderer.domElement || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+            let movementX = e.movementX || 0;
+            let movementY = e.movementY || 0;
+            G.player.yaw -= movementX * G.sensitivity;
+            G.player.pitch -= movementY * G.sensitivity;
+            G.player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, G.player.pitch));
         }
     });
-    document.addEventListener('keyup', e => { G.inputKeys[e.code] = false; });
-    
-    // Smooth Desktop mouse integration handling matrices
-    document.addEventListener('mousedown', e => {
-        if (!G.gameStarted || !G.alive) return;
-        if (e.button === 0) G.isFiring = true;
-        if (e.button === 2) triggerOpticsSightsADS(true);
+
+    window.addEventListener('mousedown', e => {
+        if (G.gameStarted && G.alive) {
+            if (e.button === 0) {
+                G.isFiring = true;
+                if (!G.arsenal[G.currentWeaponIndex].fullyAuto) evaluateKineticWeaponDischarge();
+            }
+            if (e.button === 2) engageOpticAimingMode(true);
+        }
     });
-    document.addEventListener('mouseup', e => {
+    window.addEventListener('mouseup', e => {
         if (e.button === 0) G.isFiring = false;
-        if (e.button === 2) triggerOpticsSightsADS(false);
+        if (e.button === 2) engageOpticAimingMode(false);
     });
-    
-    document.addEventListener('mousemove', e => {
-        if (document.pointerLockElement !== G.renderer.domElement) return;
-        const speedDampingModifier = G.aimingMode ? 0.38 : 1.0;
-        
-        // Smooth looking calculations
-        G.player.yaw -= e.movementX * G.sensitivity * speedDampingModifier;
-        G.player.pitch -= e.movementY * G.sensitivity * speedDampingModifier;
-        G.player.pitch = Math.max(-1.38, Math.min(1.38, G.player.pitch));
-    });
-    
-    document.addEventListener('contextmenu', e => e.preventDefault());
-    
-    G.renderer.domElement.addEventListener('click', () => {
-        if (G.gameStarted && G.alive && !/Mobi|Android/i.test(navigator.userAgent)) {
-            G.renderer.domElement.requestPointerLock();
-        }
-    });
-    
-    deployDynamicMobileHUD();
+    window.addEventListener('contextmenu', e => e.preventDefault());
 
+    // Setup Cross-Platform Controls for both touches and mouse clicks
+    const actionNodes = [
+        { id: 'm-btn-shoot', start: () => { G.isFiring = true; if(!G.arsenal[G.currentWeaponIndex].fullyAuto) evaluateKineticWeaponDischarge(); }, end: () => { G.isFiring = false; } },
+        { id: 'm-btn-ads', start: () => engageOpticAimingMode(!G.aimingMode), end: null },
+        { id: 'm-btn-reload', start: () => initiateWeaponReloadSequence(), end: null },
+        { id: 'm-btn-jump', start: () => { if(G.player.onGround) G.player.velocity.y = 0.28; }, end: null }
+    ];
 
-function deployDynamicMobileHUD() {
-    if (!/Mobi|Android/i.test(navigator.userAgent)) return;
-    document.getElementById('mobile-controls').style.display = 'block';
-    
-    const outerRing = document.getElementById('joystick-outer-ring');
-    const centerThumb = document.getElementById('joystick-center-thumb');
-    let joystickActiveStatus = false, coordinateTouchOrigin = { x: 0, y: 0 };
-    
-    outerRing.addEventListener('touchstart', e => {
-        joystickActiveStatus = true;
-        const activeTouchNode = e.touches[0];
-        coordinateTouchOrigin = { x: activeTouchNode.clientX, y: activeTouchNode.clientY };
-    }, { passive: true });
-    
-    outerRing.addEventListener('touchmove', e => {
-        if (!joystickActiveStatus) return;
-        const activeTouchNode = e.touches[0];
-        const offsetDeltaX = activeTouchNode.clientX - coordinateTouchOrigin.x;
-        const offsetDeltaY = activeTouchNode.clientY - coordinateTouchOrigin.y;
-        const currentDistanceLength = Math.sqrt(offsetDeltaX * offsetDeltaX + offsetDeltaY * offsetDeltaY);
-        const maximumRadialLimit = 25;
-        
-        let targetX = offsetDeltaX, targetY = offsetDeltaY;
-        if (currentDistanceLength > maximumRadialLimit) {
-            targetX = (offsetDeltaX / currentDistanceLength) * maximumRadialLimit;
-            targetY = (offsetDeltaY / currentDistanceLength) * maximumRadialLimit;
-        }
-        
-        centerThumb.style.transform = `translate(calc(-50% + ${targetX}px), calc(-50% + ${targetY}px))`;
-        
-        // Map joystick vector offsets directly into directional controls
-        G.inputKeys['KeyW'] = targetY < -12;
-        G.inputKeys['KeyS'] = targetY > 12;
-        G.inputKeys['KeyA'] = targetX < -12;
-        G.inputKeys['KeyD'] = targetX > 12;
-    }, { passive: true });
-    
-    outerRing.addEventListener('touchend', () => {
-        joystickActiveStatus = false;
-        centerThumb.style.transform = 'translate(-50%, -50%)';
-        G.inputKeys['KeyW'] = G.inputKeys['KeyS'] = G.inputKeys['KeyA'] = G.inputKeys['KeyD'] = false;
-    });
-    
-    // Fast tactile interactive action mapping blocks
-    document.getElementById('m-btn-shoot').addEventListener('touchstart', e => { e.preventDefault(); G.isFiring = true; });
-    document.getElementById('m-btn-shoot').addEventListener('touchend', e => { e.preventDefault(); G.isFiring = false; });
-    document.getElementById('m-btn-ads').addEventListener('touchstart', e => { e.preventDefault(); triggerOpticsSightsADS(!G.aimingMode); });
-    document.getElementById('m-btn-reload').addEventListener('touchstart', e => { e.preventDefault(); executeActiveReloadWorkflow(); });
-    document.getElementById('m-btn-jump').addEventListener('touchstart', e => { e.preventDefault(); if (G.player.onGround) triggerPlayerJumpAction(); });
-    
-    // High-performance gliding camera look engine on right split viewport
-    let displayLookTrackingID = null, locationLastTouchLook = { x: 0, y: 0 };
-    
-    document.body.addEventListener('touchstart', e => {
-        for (let i = 0; i < e.changedTouches.length; i++) {
-            let t = e.changedTouches[i];
-            if (t.clientX > window.innerWidth / 2 && displayLookTrackingID === null) {
-                displayLookTrackingID = t.identifier;
-                locationLastTouchLook = { x: t.clientX, y: t.clientY };
+    actionNodes.forEach(btn => {
+        const el = document.getElementById(btn.id);
+        if (el) {
+            // Touch screens
+            el.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (btn.start) btn.start();
+            }, { passive: false });
+            if (btn.end) {
+                el.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    if (btn.end) btn.end();
+                }, { passive: false });
+            }
+            // Mouse fallbacks
+            el.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (btn.start) btn.start();
+            });
+            if (btn.end) {
+                el.addEventListener('mouseup', (e) => {
+                    e.preventDefault();
+                    if (btn.end) btn.end();
+                });
             }
         }
-    }, { passive: true });
-    
-    document.body.addEventListener('touchmove', e => {
+    });
+
+    setupMobileJoystickEngine();
+}
+
+function setupMobileJoystickEngine() {
+    const ringElement = document.getElementById('joystick-outer-ring');
+    const thumbElement = document.getElementById('joystick-center-thumb');
+    if (!ringElement) return;
+
+    function processJoystickMovement(clientX, clientY) {
+        const deltaX = clientX - joystickPositionOrigin.x;
+        const deltaY = clientY - joystickPositionOrigin.y;
+        const totalDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+        const physicalMaxRadius = 40;
+
+        if (totalDistance === 0) {
+            joystickCurrentVector.set(0, 0);
+            thumbElement.style.transform = 'translate(-50%, -50%)';
+            return;
+        }
+
+        let controlScale = Math.min(totalDistance, physicalMaxRadius);
+        const angleNormalized = Math.atan2(deltaY, deltaX);
+        const calculatedX = Math.cos(angleNormalized) * controlScale;
+        const calculatedY = Math.sin(angleNormalized) * controlScale;
+
+        thumbElement.style.transform = `translate(calc(-50% + ${calculatedX}px), calc(-50% + ${calculatedY}px))`;
+        joystickCurrentVector.set(calculatedX / physicalMaxRadius, -calculatedY / physicalMaxRadius);
+    }
+
+    ringElement.addEventListener('touchstart', e => {
+        e.preventDefault();
+        const activeTouch = e.changedTouches[0];
+        joystickTrackingTouchId = activeTouch.identifier;
+        const elementRect = ringElement.getBoundingClientRect();
+        joystickPositionOrigin.set(elementRect.left + elementRect.width / 2, elementRect.top + elementRect.height / 2);
+        processJoystickMovement(activeTouch.clientX, activeTouch.clientY);
+    }, { passive: false });
+
+    window.addEventListener('touchmove', e => {
+        if (joystickTrackingTouchId === null) return;
         for (let i = 0; i < e.touches.length; i++) {
-            let t = e.touches[i];
-            if (t.identifier === displayLookTrackingID) {
-                let currentSwipeDeltaX = t.clientX - locationLastTouchLook.x;
-                let currentSwipeDeltaY = t.clientY - locationLastTouchLook.y;
-                
-                let dynamicMobileSens = G.aimingMode ? 0.003 : 0.0065;
-                G.player.yaw -= currentSwipeDeltaX * dynamicMobileSens;
-                G.player.pitch -= currentSwipeDeltaY * dynamicMobileSens;
-                G.player.pitch = Math.max(-1.38, Math.min(1.38, G.player.pitch));
-                
-                locationLastTouchLook = { x: t.clientX, y: t.clientY };
+            if (e.touches[i].identifier === joystickTrackingTouchId) {
+                processJoystickMovement(e.touches[i].clientX, e.touches[i].clientY);
+                break;
             }
         }
-    }, { passive: true });
-    
-    const killTouchLookSession = e => {
+    }, { passive: false });
+
+    const terminateJoystickTracking = e => {
+        if (joystickTrackingTouchId === null) return;
+        let matched = false;
+        if (e.changedTouches) {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === joystickTrackingTouchId) matched = true;
+            }
+        } else {
+            matched = true;
+        }
+        if (matched) {
+            joystickTrackingTouchId = null;
+            joystickCurrentVector.set(0, 0);
+            thumbElement.style.transform = 'translate(-50%, -50%)';
+        }
+    };
+
+    window.addEventListener('touchend', terminateJoystickTracking);
+    window.addEventListener('touchcancel', terminateJoystickTracking);
+
+    let mouseJoystickActive = false;
+    ringElement.addEventListener('mousedown', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        mouseJoystickActive = true;
+        const elementRect = ringElement.getBoundingClientRect();
+        joystickPositionOrigin.set(elementRect.left + elementRect.width / 2, elementRect.top + elementRect.height / 2);
+        processJoystickMovement(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('mousemove', e => {
+        if (!mouseJoystickActive) return;
+        processJoystickMovement(e.clientX, e.clientY);
+    });
+
+    const terminateMouseJoystick = () => {
+        if (!mouseJoystickActive) return;
+        mouseJoystickActive = false;
+        joystickCurrentVector.set(0, 0);
+        thumbElement.style.transform = 'translate(-50%, -50%)';
+    };
+    window.addEventListener('mouseup', terminateMouseJoystick);
+
+    let cameraRotationSwipeTouchId = null;
+    const swipePositionPrevious = new THREE.Vector2();
+
+    window.addEventListener('touchstart', e => {
+        if (!G.gameStarted || !G.alive) return;
         for (let i = 0; i < e.changedTouches.length; i++) {
-            if (e.changedTouches[i].identifier === displayLookTrackingID) {
-                displayLookTrackingID = null;
+            const touchNode = e.changedTouches[i];
+            // Fixes system finger hijacking: checks touch identities accurately
+            if (touchNode.clientX > window.innerWidth / 2.2 && joystickTrackingTouchId !== touchNode.identifier) {
+                let nodeElement = document.elementFromPoint(touchNode.clientX, touchNode.clientY);
+                if (nodeElement && nodeElement.closest('.mobile-action-node')) continue;
+                
+                cameraRotationSwipeTouchId = touchNode.identifier;
+                swipePositionPrevious.set(touchNode.clientX, touchNode.clientY);
+                break;
+            }
+        }
+    });
+
+    window.addEventListener('touchmove', e => {
+        if (cameraRotationSwipeTouchId === null) return;
+        for (let i = 0; i < e.touches.length; i++) {
+            const touchNode = e.touches[i];
+            if (touchNode.identifier === cameraRotationSwipeTouchId) {
+                const deltaSwipeX = touchNode.clientX - swipePositionPrevious.x;
+                const deltaSwipeY = touchNode.clientY - swipePositionPrevious.y;
+                
+                G.player.yaw -= deltaSwipeX * 0.007;
+                G.player.pitch -= deltaSwipeY * 0.007;
+                G.player.pitch = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, G.player.pitch));
+                
+                swipePositionPrevious.set(touchNode.clientX, touchNode.clientY);
+                break;
+            }
+        }
+    });
+
+    const terminateSwipeTracking = e => {
+        if (cameraRotationSwipeTouchId === null) return;
+        for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === cameraRotationSwipeTouchId) {
+                cameraRotationSwipeTouchId = null;
+                break;
             }
         }
     };
-    document.body.addEventListener('touchend', killTouchLookSession);
-    document.body.addEventListener('touchcancel', killTouchLookSession);
+    window.addEventListener('touchend', terminateSwipeTracking);
+    window.addEventListener('touchcancel', terminateSwipeTracking);
 }
 
-function triggerPlayerJumpAction() {
-    G.player.velocity.y = 7.5;
-    G.player.onGround = false;
-}
-
-function triggerOpticsSightsADS(activeState) {
-    G.aimingMode = activeState;
-    const vignetteMask = document.getElementById('scope-vignette');
-    const reticleGroup = document.getElementById('crosshair-reticle');
-    
-    if (G.aimingMode) {
-        G.camera.fov = parseInt(document.getElementById('param-fov').value) * 0.55;
-        if (G.arsenal[G.currentWeaponIndex].sniper) {
-            vignetteMask.style.display = 'block';
-            reticleGroup.style.opacity = '0';
-        }
-    } else {
-        G.camera.fov = parseInt(document.getElementById('param-fov').value);
-        vignetteMask.style.display = 'none';
-        reticleGroup.style.opacity = '1';
-    }
+function engageOpticAimingMode(statusActive) {
+    G.aimingMode = statusActive;
+    document.getElementById('scope-vignette').style.display = (statusActive && G.arsenal[G.currentWeaponIndex].sniper) ? 'block' : 'none';
+    const finalTargetFOV = statusActive ? (G.arsenal[G.currentWeaponIndex].sniper ? 20 : 45) : parseInt(document.getElementById('param-fov').value);
+    G.camera.fov = finalTargetFOV;
     G.camera.updateProjectionMatrix();
 }
 
-// ===== FLUID KINETIC CALCULATIONS LOOP & PERFECTED PHYSICS MATRICES =====
-function computePlayerKinematics(dt) {
-    if (!G.alive) return;
+function swapSelectedArsenalWeapon(indexRequested) {
+    if (indexRequested < 0 || indexRequested >= G.arsenal.length || G.isReloading) return;
+    G.currentWeaponIndex = indexRequested;
+    engageOpticAimingMode(false);
+    syncWeaponDisplayTelemetry();
+}
+
+function initiateWeaponReloadSequence() {
+    const activeWeapon = G.arsenal[G.currentWeaponIndex];
+    if (G.isReloading || activeWeapon.ammo === activeWeapon.magCapacity || activeWeapon.reserve === 0) return;
+    G.isReloading = true;
+    G.activeReloadTimer = activeWeapon.reloadTime;
+    document.getElementById('weapon-ammo-count').innerHTML = `RELOADING...`;
+}
+
+function executeContextualInteraction() {
+    if (G.targetLootInteractivityFocus) {
+        const cache = G.targetLootInteractivityFocus;
+        cache.spent = true;
+        G.scene.remove(cache.mesh);
+        swapSelectedArsenalWeapon(cache.weaponIdx);
+        pushCombatFeedNotification("CRATE ACQUIRED: Swapped weapons loadout");
+    }
+}
+
+// ===== CORE REALTIME SIMULATION TICK LOOPS & PHYSICS =====
+function evaluateKineticWeaponDischarge() {
+    if (G.isReloading || !G.alive) return;
+    const currentTimestamp = performance.now();
+    const currentWeapon = G.arsenal[G.currentWeaponIndex];
     
-    // Core speed modifications (Sprint acceleration checks)
-    const activeSpeedCoefficient = G.inputKeys['ShiftLeft'] ? 10.5 : 6.2;
+    if (currentTimestamp - G.timeOfLastShot < (60000 / currentWeapon.rof)) return;
+    if (currentWeapon.ammo <= 0) { initiateWeaponReloadSequence(); return; }
     
-    // CORRECTED MOTION MATRIX: Perfect forward alignment matching exact camera orientation vectors
-    const forwardVector = new THREE.Vector3(-Math.sin(G.player.yaw), 0, -Math.cos(G.player.yaw));
-    const sidewardVector = new THREE.Vector3(Math.cos(G.player.yaw), 0, -Math.sin(G.player.yaw));
+    currentWeapon.ammo--;
+    G.timeOfLastShot = currentTimestamp;
+    G.statisticalShotsFired++;
+    syncWeaponDisplayTelemetry();
     
-    let userDirectionalIntent = new THREE.Vector3(0, 0, 0);
-    if (G.inputKeys['KeyW']) userDirectionalIntent.add(forwardVector);
-    if (G.inputKeys['KeyS']) userDirectionalIntent.sub(forwardVector);
-    if (G.inputKeys['KeyA']) userDirectionalIntent.sub(sidewardVector);
-    if (G.inputKeys['KeyD']) userDirectionalIntent.add(sidewardVector);
+    G.cameraShakeIntensity = currentWeapon.sniper ? 0.08 : 0.035;
+    G.cameraShakeDuration = 0.12;
     
-    userDirectionalIntent.normalize();
+    const laserOriginVec = new THREE.Vector3().copy(G.player.position);
+    const directionVec = new THREE.Vector3();
+    G.camera.getWorldDirection(directionVec);
     
-    G.player.velocity.x += userDirectionalIntent.x * activeSpeedCoefficient * dt * 9;
-    G.player.velocity.z += userDirectionalIntent.z * activeSpeedCoefficient * dt * 9;
-    
-    // Friction damping operations
-    G.player.velocity.x *= Math.pow(0.012, dt);
-    G.player.velocity.z *= Math.pow(0.012, dt);
-    
-    // Gravity simulation computations
-    G.player.velocity.y -= 22.0 * dt;
-    G.player.position.y += G.player.velocity.y * dt;
-    
-    if (G.player.position.y <= 1.8) {
-        G.player.position.y = 1.8;
-        G.player.velocity.y = 0;
-        G.player.onGround = true;
+    if (!G.aimingMode) {
+        directionVec.x += (Math.random() - 0.5) * currentWeapon.variance;
+        directionVec.y += (Math.random() - 0.5) * currentWeapon.variance;
+        directionVec.z += (Math.random() - 0.5) * currentWeapon.variance;
+        directionVec.normalize();
     }
     
-    G.player.position.x += G.player.velocity.x * dt;
-    G.player.position.z += G.player.velocity.z * dt;
+    renderLuminousBeamTracer(laserOriginVec, directionVec, currentWeapon.beamColor);
     
-    // Boundary clamp logic
-    const arenaBoundForce = G.mapSizeExtent * 0.98;
-    G.player.position.x = Math.max(-arenaBoundForce, Math.min(arenaBoundForce, G.player.position.x));
-    G.player.position.z = Math.max(-arenaBoundForce, Math.min(arenaBoundForce, G.player.position.z));
+    const physicsRaycaster = new THREE.Raycaster(laserOriginVec, directionVec, 0, currentWeapon.maxRange);
     
-    // High accuracy architectural structure wall bounding check loop
-    for (let bounding of G.obstacleStructuralColliders) {
-        if (Math.abs(G.player.position.x - bounding.originX) < bounding.halfW && Math.abs(G.player.position.z - bounding.originZ) < bounding.halfD) {
-            if (G.player.position.y - 1.8 < bounding.heightMax) {
-                const penetrativeOverlapX = bounding.halfW - Math.abs(G.player.position.x - bounding.originX);
-                const penetrativeOverlapZ = bounding.halfD - Math.abs(G.player.position.z - bounding.originZ);
-                
-                if (penetrativeOverlapX < penetrativeOverlapZ) {
-                    G.player.position.x = (G.player.position.x > bounding.originX) ? bounding.originX + bounding.halfW : bounding.originX - bounding.halfW;
-                    G.player.velocity.x = 0;
-                } else {
-                    G.player.position.z = (G.player.position.z > bounding.originZ) ? bounding.originZ + bounding.halfD : bounding.originZ - bounding.halfD;
-                    G.player.velocity.z = 0;
-                }
+    let elementsToTest = [];
+    G.aiAgents.forEach(bot => { if (bot.alive) elementsToTest.push(bot.mesh.children[0]); });
+    
+    const rayIntersections = physicsRaycaster.intersectObjects(elementsToTest);
+    if (rayIntersections.length > 0) {
+        const structuralHitObject = rayIntersections[0].object;
+        let targetedBotInstance = G.aiAgents.find(bot => bot.mesh === structuralHitObject.parent);
+        if (targetedBotInstance && targetedBotInstance.alive) {
+            targetedBotInstance.hp -= currentWeapon.dmg;
+            G.operationalDamageTotal += currentWeapon.dmg;
+            G.statisticalShotsLanded++;
+            
+            triggerHitmarkerFeedback();
+            
+            if (targetedBotInstance.hp <= 0) {
+                targetedBotInstance.alive = false;
+                G.scene.remove(targetedBotInstance.mesh);
+                G.killStreakCounter++;
+                pushCombatFeedNotification(`ELIMINATED AI BOT #${targetedBotInstance.id}`);
+                document.getElementById('roster-count-val').textContent = G.aiAgents.filter(b => b.alive).length + 1;
             }
         }
     }
+}
+
+function renderLuminousBeamTracer(origin, dir, hexagonalColorHex) {
+    const geo = new THREE.BufferGeometry().setFromPoints([origin, new THREE.Vector3().copy(origin).addScaledVector(dir, 160)]);
+    const mat = new THREE.LineBasicMaterial({ color: hexagonalColorHex, transparent: true, opacity: 0.85 });
+    const tracerLine = new THREE.Line(geo, mat);
+    G.scene.add(tracerLine);
+    G.localizedTracers.push({ mesh: tracerLine, timestampExpiration: performance.now() + 65 });
+}
+
+function triggerHitmarkerFeedback() {
+    const indicator = document.getElementById('hitmarker-indicator');
+    indicator.classList.remove('triggered');
+    void indicator.offsetWidth;
+    indicator.classList.add('triggered');
+    setTimeout(() => indicator.classList.remove('triggered'), 120);
+}
+
+function pushCombatFeedNotification(textMessage) {
+    const feed = document.getElementById('combat-feed');
+    const card = document.createElement('div');
+    card.className = 'feed-card';
+    card.textContent = textMessage;
+    feed.appendChild(card);
+    setTimeout(() => card.remove(), 4000);
+}
+
+function processPlayerDamageImpact(amountReceived) {
+    if (!G.alive) return;
+    if (G.player.armor > 0) {
+        G.player.armor -= amountReceived * 0.6;
+        G.player.hp -= amountReceived * 0.4;
+    } else {
+        G.player.hp -= amountReceived;
+    }
     
-    // Sync local camera positions arrays with strict constraints
-    G.camera.position.set(G.player.position.x, G.player.position.y, G.player.position.z);
-    G.camera.rotation.order = 'YXZ';
-    G.camera.rotation.y = G.player.yaw;
-    G.camera.rotation.x = G.player.pitch;
+    G.player.hp = Math.max(0, G.player.hp);
+    G.player.armor = Math.max(0, G.player.armor);
+    syncHUDDisplays();
     
-    // Frame evaluation for fire triggers
-    if (G.isFiring && G.arsenal[G.currentWeaponIndex].fullyAuto) executeRifleFireAction();
-    else if (G.isFiring && !G.processedSingleClickTrigger) executeRifleFireAction();
-    G.processedSingleClickTrigger = G.isFiring;
+    const vignette = document.getElementById('damage-vignette');
+    vignette.classList.add('triggered');
+    setTimeout(() => vignette.classList.remove('triggered'), 150);
+    
+    if (G.player.hp <= 0) terminateMatchSimulationGrounds(false);
+}
+
+function syncHUDDisplays() {
+    document.getElementById('lbl-hp-val').textContent = Math.round(G.player.hp);
+    document.getElementById('hp-bar').style.width = G.player.hp + '%';
+    document.getElementById('lbl-ap-val').textContent = Math.round(G.player.armor);
+    document.getElementById('ap-bar').style.width = G.player.armor + '%';
+    document.getElementById('lbl-ep-val').textContent = Math.round(G.player.energy);
+    document.getElementById('ep-bar').style.width = G.player.energy + '%';
+}
+
+function syncWeaponDisplayTelemetry() {
+    const active = G.arsenal[G.currentWeaponIndex];
+    document.getElementById('weapon-active-name').textContent = active.name;
+    document.getElementById('weapon-ammo-count').innerHTML = `${active.ammo}<span>/${active.reserve}</span>`;
+}
+
+function primaryExecutionPipelineFrame() {
+    if (!G.gameStarted || !G.alive) return;
+    G.frameRegistrationID = requestAnimationFrame(primaryExecutionPipelineFrame);
+    
+    const deltaSeconds = Math.min(G.clock.getDelta(), 0.1);
+    const executionCurrentTimestamp = performance.now();
     
     if (G.isReloading) {
-        G.activeReloadTimer -= dt;
+        G.activeReloadTimer -= deltaSeconds;
         if (G.activeReloadTimer <= 0) {
-            const currentWeaponNode = G.arsenal[G.currentWeaponIndex];
-            const neededAmmunition = currentWeaponNode.magCapacity - currentWeaponNode.ammo;
-            const finalTransferredUnits = Math.min(neededAmmunition, currentWeaponNode.reserve);
-            currentWeaponNode.ammo += finalTransferredUnits;
-            currentWeaponNode.reserve -= finalTransferredUnits;
             G.isReloading = false;
+            const w = G.arsenal[G.currentWeaponIndex];
+            const shortfall = w.magCapacity - w.ammo;
+            const absoluteTransferAmount = Math.min(shortfall, w.reserve);
+            w.ammo += absoluteTransferAmount;
+            w.reserve -= absoluteTransferAmount;
             syncWeaponDisplayTelemetry();
         }
     }
     
-    evaluateEncroachingEnvironmentalZoneDamage(dt);
-    evaluateCameraShakeMatrix(dt);
-}
-
-// ===== REALTIME COMBAT COMPUTATION & TRACER RAYCASTING PIPELINE =====
-function executeRifleFireAction() {
-    const activeWeaponNode = G.arsenal[G.currentWeaponIndex];
-    if (G.isReloading) return;
-    if (activeWeaponNode.ammo <= 0) { executeActiveReloadWorkflow(); return; }
+    if (G.isFiring && G.arsenal[G.currentWeaponIndex].fullyAuto) evaluateKineticWeaponDischarge();
     
-    const timestampNow = performance.now();
-    if (timestampNow - G.timeOfLastShot < (60000 / activeWeaponNode.rof)) return;
-    G.timeOfLastShot = timestampNow;
-    
-    activeWeaponNode.ammo--;
-    G.statisticalShotsFired++;
-    
-    // Realistic Procedural Recoil Offset Calculations
-    const microSightsFactor = G.aimingMode ? 0.35 : 1.0;
-    G.player.pitch += (0.012 + Math.random() * 0.01) * microSightsFactor;
-    G.player.yaw += (Math.random() - 0.5) * 0.014 * microSightsFactor;
-    
-    const appliedVarianceSpread = activeWeaponNode.variance * microSightsFactor;
-    const localizedFireDirectionRay = new THREE.Vector3((Math.random() - 0.5) * appliedVarianceSpread, (Math.random() - 0.5) * appliedVarianceSpread, -1);
-    localizedFireDirectionRay.applyEuler(new THREE.Euler(G.player.pitch, G.player.yaw, 0, 'YXZ')).normalize();
-    
-    // Deploy precise raycast intersection tracking
-    const operationalRaycaster = new THREE.Raycaster(G.camera.position.clone(), localizedFireDirectionRay, 0, activeWeaponNode.maxRange);
-    
-    let validHitRegistered = false;
-    for (let bot of G.aiAgents) {
-        if (!bot.activeAlive) continue;
-        const currentAbsoluteDistance = G.camera.position.distanceTo(bot.meshGroup.position);
-        if (currentAbsoluteDistance > activeWeaponNode.maxRange) continue;
-        
-        // Fast cylindrical vector distance calculations
-const targetPosition = bot.meshGroup.position.clone();
-targetPosition.y = 1.3;
-
-const lineDeltaVector = new THREE.Vector3().subVectors(
-    targetPosition,
-    G.camera.position
-);
-
-const distanceAlongRay = lineDeltaVector.dot(localizedFireDirectionRay);
-
-if (distanceAlongRay > 0) {
-
-    const closestPoint = G.camera.position.clone().add(
-        localizedFireDirectionRay.clone().multiplyScalar(distanceAlongRay)
-    );
-
-    const perpendicularDistance =
-        closestPoint.distanceTo(targetPosition);
-
-    if (perpendicularDistance < 1.0) {
-            const computedScalarDot = new THREE.Vector3().subVectors(bot.meshGroup.position, G.camera.position).dot(localizedFireDirectionRay);
-            const absoluteIntersectionHeightY = G.camera.position.y + localizedFireDirectionRay.y * computedScalarDot;
-            const evaluateHeadshotThreshold = (absoluteIntersectionHeightY > 1.62);
-            
-            let scalingDamageOutput = activeWeaponNode.dmg * (Math.random() * 0.2 + 0.9);
-            if (evaluateHeadshotThreshold) scalingDamageOutput *= 2.5;
-            
-commitDamageToTargetBot(bot, scalingDamageOutput, evaluateHeadshotThreshold);
-validHitRegistered = true;
-break;
-        }
-    }
-}
-    
-    renderProceduralKineticTracer(localizedFireDirectionRay, activeWeaponNode.maxRange, activeWeaponNode.beamColor);
-    syncWeaponDisplayTelemetry();
-    triggerCameraIntensityShake(
-    /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)
-        ? 0.05
-        : 0.15,
-    0.09
-);
-}
-
-function commitDamageToTargetBot(bot, calculatedDamage, isHeadshot) {
-    G.statisticalShotsLanded++;
-    G.operationalDamageTotal += Math.round(calculatedDamage);
-    triggerHitmarkerFlash(isHeadshot);
-    
-    if (bot.protectionArmor > 0) {
-        bot.protectionArmor -= calculatedDamage * 0.45;
-        calculatedDamage *= 0.55;
-    }
-    bot.vitalityHP -= calculatedDamage;
-    bot.operationalState = 'attack'; // Direct behavioral alert transition matrix trigger
-    
-    if (bot.vitalityHP <= 0 && bot.activeAlive) {
-        bot.activeAlive = false;
-        bot.meshGroup.visible = false;
-        G.killStreakCounter++;
-        document.getElementById('roster-count-val').textContent = G.aiAgents.filter(b => b.activeAlive).length + 1;
-        appendKillfeedMessage(`YOU ⚔️ ${bot.identityName}` + (isHeadshot ? ' [HEADSHOT]' : ''));
-        evaluateVictoryConditions();
-    }
-}
-
-function renderProceduralKineticTracer(directionRay, absoluteMaxRange, dynamicColorHex) {
-    const originPoint = G.camera.position.clone().add(new THREE.Vector3(0, -0.25, 0));
-    const endPoint = originPoint.clone().addScaledVector(directionRay, Math.min(absoluteMaxRange, 85));
-    
-    const linesBufferGeometry = new THREE.BufferGeometry().setFromPoints([originPoint, endPoint]);
-    const energyLineMaterial = new THREE.LineBasicMaterial({ color: dynamicColorHex, transparent: true, opacity: 0.9 });
-    const lineSegmentMesh = new THREE.Line(linesBufferGeometry, energyLineMaterial);
-    
-    G.scene.add(lineSegmentMesh);
-    setTimeout(() => {
-        G.scene.remove(lineSegmentMesh);
-        linesBufferGeometry.dispose();
-        energyLineMaterial.dispose();
-    }, 40);
-}
-
-// ===== DISTRIBUTED ARTIFICIAL INTELLIGENCE ADVANCED PATROLS & SKELETAL WALK ANIMATION ENGINE =====
-function runAIAgentsProcessingEngine(dt) {
-    const epochTimestampNow = performance.now();
-    
-    for (let bot of G.aiAgents) {
-        if (!bot.activeAlive) continue;
-        
-        const deltaVectorX = G.player.position.x - bot.coordinateX;
-        const deltaVectorZ = G.player.position.z - bot.coordinateZ;
-        const absoluteDistanceToUser = Math.sqrt(deltaVectorX * deltaVectorX + deltaVectorZ * deltaVectorZ);
-        
-        // Skeletal Walking Animation Logic using cyclic rotation interpolation matrices
-        bot.animatedTickMultiplier += dt * (bot.operationalState === 'attack' ? 14 : 7);
-        const dynamicSineWaveValue = Math.sin(bot.animatedTickMultiplier);
-        
-        bot.leftLegNode.rotation.x = dynamicSineWaveValue * 0.55;
-        bot.rightLegNode.rotation.x = -dynamicSineWaveValue * 0.55;
-        bot.leftArmNode.rotation.x = -dynamicSineWaveValue * 0.3;
-        bot.rightArmNode.rotation.x = dynamicSineWaveValue * 0.3;
-        
-        if (absoluteDistanceToUser < bot.visualDetectionRange) {
-            bot.operationalState = 'attack';
-        }
-        
-        if (bot.operationalState === 'patrol') {
-            const targetDeltaX = bot.patrolTarget.x - bot.coordinateX;
-            const targetDeltaZ = bot.patrolTarget.y - bot.coordinateZ;
-            const dynamicDistanceLength = Math.sqrt(targetDeltaX * targetDeltaX + targetDeltaZ * targetDeltaZ);
-            
-            if (dynamicDistanceLength < 5.0) {
-                bot.patrolTarget.set(
-                    (Math.random() - 0.5) * G.mapSizeExtent * 0.9,
-                    (Math.random() - 0.5) * G.mapSizeExtent * 0.9
-                );
-            }
-            bot.yawAngle = Math.atan2(targetDeltaZ, targetDeltaX);
-            bot.coordinateX += Math.cos(bot.yawAngle) * bot.kineticMovementVelocity * dt * 0.5;
-            bot.coordinateZ += Math.sin(bot.yawAngle) * bot.kineticMovementVelocity * dt * 0.5;
-        } else {
-            // High Tier Aggressive Tracking ADS Stance
-            bot.yawAngle = Math.atan2(deltaVectorZ, deltaVectorX);
-            bot.rightArmNode.rotation.x = -Math.PI / 2 + G.player.pitch; 
-            
-            if (absoluteDistanceToUser > 14.0) {
-                bot.coordinateX += Math.cos(bot.yawAngle) * bot.kineticMovementVelocity * dt;
-                bot.coordinateZ += Math.sin(bot.yawAngle) * bot.kineticMovementVelocity * dt;
-            }
-            
-            // Core weapon simulation execution for bots
-            if (absoluteDistanceToUser < bot.visualDetectionRange && (epochTimestampNow - bot.timestampLastFired > (60000 / bot.assignedWeapon.rof * 1.8))) {
-                bot.timestampLastFired = epochTimestampNow;
-                if (Math.random() < 0.08) { // Operational accuracy balancing ratio matrix
-                    applyDamageToActivePlayer(bot.assignedWeapon.dmg * 0.12);
-                }
-            }
-        }
-        
-        bot.meshGroup.position.set(bot.coordinateX, 0, bot.coordinateZ);
-        bot.meshGroup.rotation.y = -bot.yawAngle - Math.PI / 2;
-    }
-}
-
-
-function processZoneCompressionCycle(dt) {
-    G.zoneCountdownTimer -= dt;
-    
-    if (G.zoneCountdownTimer <= 0 && !G.zoneShrinkProcessing) {
-        G.zoneShrinkProcessing = true;
+    G.zoneCountdownTimer -= deltaSeconds;
+    if (G.zoneCountdownTimer <= 0) {
+        G.zoneCountdownTimer = 45;
         G.zoneTargetRadius = Math.max(20, G.zoneCurrentRadius * 0.6);
-        G.zoneCountdownTimer = 50;
-        appendSystemNotification('⚠️ CRITICAL WARNING: GRID CONSTRICTION EXPEDITION STARTED ⚠️');
+        G.zoneShrinkProcessing = true;
+        pushCombatFeedNotification("☢️ CRITICAL GRID COMPRESSION IN PROGRESS ☢️");
     }
     
     if (G.zoneShrinkProcessing) {
-        G.zoneCurrentRadius -= dt * 7.5;
+        G.zoneCurrentRadius -= deltaSeconds * 6.5;
         if (G.zoneCurrentRadius <= G.zoneTargetRadius) {
             G.zoneCurrentRadius = G.zoneTargetRadius;
             G.zoneShrinkProcessing = false;
         }
     }
+    document.getElementById('restriction-timer').textContent = `${Math.max(0, Math.ceil(G.zoneCountdownTimer))}s (${Math.round(G.zoneCurrentRadius)}m)`;
     
-    const displayOutputClock = Math.max(0, Math.ceil(G.zoneCountdownTimer));
-    document.getElementById('restriction-timer').textContent = G.zoneShrinkProcessing ? 'GRID COLLAPSING...' : `${displayOutputClock}s`;
-}
-
-// ===== ADVANCED RADAR RENDERING CONTEXT ENGINE =====
-function executeRadarMapRefreshCycle() {
-    const ctx = G.interfaceMapRadarCtx;
-    const dims = 280;
-    const gridReductionRatio = dims / (G.mapSizeExtent * 2);
-    const originCenter = dims / 2;
-    
-    ctx.clearRect(0, 0, dims, dims);
-    
-    // Base structural backplates
-    ctx.fillStyle = 'rgba(6, 10, 16, 0.9)';
-    ctx.beginPath();
-    ctx.arc(originCenter, originCenter, originCenter - 2, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Safe Zone Boundary Line Rings
-    ctx.strokeStyle = '#ff4757';
-    ctx.lineWidth = 2.0;
-    ctx.beginPath();
-    ctx.arc(originCenter + G.zoneCenter.x * gridReductionRatio, originCenter + G.zoneCenter.y * gridReductionRatio, G.zoneCurrentRadius * gridReductionRatio, 0, Math.PI * 2);
-    ctx.stroke();
-    
-    // Draw building footprints onto minimal map
-    ctx.fillStyle = 'rgba(75, 101, 132, 0.45)';
-    for (let b of G.obstacleStructuralColliders) {
-        ctx.fillRect(originCenter + (b.originX - b.halfW) * gridReductionRatio, originCenter + (b.originZ - b.halfD) * gridReductionRatio, (b.halfW * 2) * gridReductionRatio, (b.halfD * 2) * gridReductionRatio);
-    }
-    
-    // Render dynamic active hostile signatures
-    ctx.fillStyle = '#ff4757';
-    for (let bot of G.aiAgents) {
-        if (!bot.activeAlive) continue;
-        ctx.beginPath();
-        ctx.arc(originCenter + bot.coordinateX * gridReductionRatio, originCenter + bot.coordinateZ * gridReductionRatio, 3.0, 0, Math.PI * 2);
-        ctx.fill();
-    }
-    
-    // Central user position identity point mapping
-    ctx.fillStyle = '#00ffcc';
-    const scalarMapX = originCenter + G.player.position.x * gridReductionRatio;
-    const scalarMapZ = originCenter + G.player.position.z * gridReductionRatio;
-    ctx.beginPath();
-    ctx.arc(scalarMapX, scalarMapZ, 4.5, 0, Math.PI * 2);
-    ctx.fill();
-}
-
-// ===== DAMAGE VIGNETTE REGULATION & CRITICAL TELEMETRY LINKS =====
-function applyDamageToActivePlayer(volume) {
-    if (!G.alive) return;
-    
-    if (G.player.armor > 0) {
-        G.player.armor -= volume * 0.55;
-        volume *= 0.45;
-    }
-    G.player.hp -= volume;
-    
-    const vignetteTargetNode = document.getElementById('damage-vignette');
-    vignetteTargetNode.classList.add('triggered');
-    setTimeout(() => vignetteTargetNode.classList.remove('triggered'), 140);
-    
-    triggerCameraIntensityShake(0.38, 0.16);
-    syncHUDDisplays();
-    
-    if (G.player.hp <= 0) {
-        G.player.hp = 0;
-        executeSimulationTerminationSequence(false);
-    }
-}
-
-function evaluateEncroachingEnvironmentalZoneDamage(dt) {
-    const deltaVectorX = G.player.position.x - G.zoneCenter.x;
-    const deltaVectorY = G.player.position.z - G.zoneCenter.y;
-    const currentRadialDistance = Math.sqrt(deltaVectorX * deltaVectorX + deltaVectorY * deltaVectorY);
-    
-    if (currentRadialDistance > G.zoneCurrentRadius) {
-        G.localizedZoneDamageClock += dt;
+    const playerDistance2D = new THREE.Vector2(G.player.position.x, G.player.position.z).distanceTo(G.zoneCenter);
+    if (playerDistance2D > G.zoneCurrentRadius) {
         document.getElementById('zone-encroachment-warning').style.display = 'block';
+        G.localizedZoneDamageClock += deltaSeconds;
         if (G.localizedZoneDamageClock >= 1.0) {
-            applyDamageToActivePlayer(2);
+            processPlayerDamageImpact(7);
             G.localizedZoneDamageClock = 0;
         }
     } else {
         document.getElementById('zone-encroachment-warning').style.display = 'none';
     }
-}
-
-function triggerCameraIntensityShake(force, duration) {
-    G.cameraShakeIntensity = force;
-    G.cameraShakeDuration = duration;
-    G.cameraShakeTotalDuration = duration;
-}
-
-function evaluateCameraShakeMatrix(dt) {
-    if (G.cameraShakeDuration > 0) {
-        G.cameraShakeDuration -= dt;
-        const fadeScaleFactor = G.cameraShakeIntensity * (G.cameraShakeDuration / G.cameraShakeTotalDuration);
-        G.camera.position.x += (Math.random() - 0.5) * fadeScaleFactor;
-        G.camera.position.y += (Math.random() - 0.5) * fadeScaleFactor;
-    }
-}
-
-function triggerHitmarkerFlash(headshot) {
-    const indicatorElement = document.getElementById('hitmarker-indicator');
-    indicatorElement.classList.add('triggered');
-    indicatorElement.querySelector('svg').style.stroke = headshot ? '#ffa502' : '#ff4757';
-    setTimeout(() => indicatorElement.classList.remove('triggered'), 100);
-}
-
-function processLootCachesProximityTicking() {
-    let focusCacheElement = null, lowestDistanceThreshold = 5.0;
     
-    for (let cache of G.localizedLootCaches) {
-        if (!cache.activeState) continue;
-        const structuralDistance = G.camera.position.distanceTo(cache.meshNode.position);
-        if (structuralDistance < lowestDistanceThreshold) {
-            lowestDistanceThreshold = structuralDistance;
-            focusCacheElement = cache;
+    let rotationShakeYaw = 0;
+    let rotationShakePitch = 0;
+    if (G.cameraShakeDuration > 0) {
+        G.cameraShakeDuration -= deltaSeconds;
+        rotationShakeYaw = (Math.random() - 0.5) * G.cameraShakeIntensity;
+        rotationShakePitch = (Math.random() - 0.5) * G.cameraShakeIntensity;
+    }
+    
+    const transformQuaternion = new THREE.Quaternion();
+    transformQuaternion.setFromEuler(new THREE.Euler(G.player.pitch + rotationShakePitch, G.player.yaw + rotationShakeYaw, 0, 'YXZ'));
+    G.camera.quaternion.copy(transformQuaternion);
+    
+    const characterMovementSpeedMatrix = (G.aimingMode ? 3.5 : 8.5) * deltaSeconds;
+    const physicsIntendedMovementVector = new THREE.Vector3();
+    
+    let forwardControlScale = joystickCurrentVector.y;
+    let sidewaysControlScale = joystickCurrentVector.x;
+    
+    if (G.inputKeys['w'] || G.inputKeys['arrowup']) forwardControlScale = 1.0;
+    if (G.inputKeys['s'] || G.inputKeys['arrowdown']) forwardControlScale = -1.0;
+    if (G.inputKeys['a'] || G.inputKeys['arrowleft']) sidewaysControlScale = -1.0;
+    if (G.inputKeys['d'] || G.inputKeys['arrowright']) sidewaysControlScale = 1.0;
+    
+    if (forwardControlScale !== 0) {
+        const forwardDirectionVector = new THREE.Vector3(0, 0, -1).applyQuaternion(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, G.player.yaw, 0)));
+        physicsIntendedMovementVector.addScaledVector(forwardDirectionVector, forwardControlScale * characterMovementSpeedMatrix);
+    }
+    if (sidewaysControlScale !== 0) {
+        const sidestepDirectionVector = new THREE.Vector3(1, 0, 0).applyQuaternion(new THREE.Quaternion().setFromEuler(new THREE.Euler(0, G.player.yaw, 0)));
+        physicsIntendedMovementVector.addScaledVector(sidestepDirectionVector, sidewaysControlScale * characterMovementSpeedMatrix);
+    }
+    
+    G.player.velocity.y -= 0.65 * deltaSeconds;
+    G.player.position.y += G.player.velocity.y;
+    G.player.onGround = false;
+    
+    if (G.player.position.y <= 1.8) {
+        G.player.position.y = 1.8;
+        G.player.velocity.y = 0;
+        G.player.onGround = true;
+        if (G.inputKeys[' ']) G.player.velocity.y = 0.28;
+    }
+    
+    const historicalPositionNode = new THREE.Vector3().copy(G.player.position);
+    G.player.position.x += physicsIntendedMovementVector.x;
+    G.player.position.z += physicsIntendedMovementVector.z;
+    
+    const boundingBoxSimulationPlayer = new THREE.Box3(
+        new THREE.Vector3(G.player.position.x - G.player.radius, 0, G.player.position.z - G.player.radius),
+        new THREE.Vector3(G.player.position.x + G.player.radius, 12, G.player.position.z + G.player.radius)
+    );
+    
+    for (let c = 0; c < G.obstacleStructuralColliders.length; c++) {
+        if (boundingBoxSimulationPlayer.intersectsBox(G.obstacleStructuralColliders[c])) {
+            G.player.position.x = historicalPositionNode.x;
+            G.player.position.z = historicalPositionNode.z;
+            break;
         }
     }
     
-    G.targetLootInteractivityFocus = focusCacheElement;
-    const promptDisplayNode = document.getElementById('interaction-alert-prompt');
+    G.camera.position.copy(G.player.position);
     
-    if (focusCacheElement) {
-        promptDisplayNode.style.display = 'block';
-        promptDisplayNode.textContent = `[F] EXTRACT SUPPLY: ${focusCacheElement.payloadLabel}`;
-    } else {
-        promptDisplayNode.style.display = 'none';
+    processAIBotsSimulationLifecycle(deltaSeconds, executionCurrentTimestamp);
+    
+    for (let t = G.localizedTracers.length - 1; t >= 0; t--) {
+        if (executionCurrentTimestamp > G.localizedTracers[t].timestampExpiration) {
+            G.scene.remove(G.localizedTracers[t].mesh);
+            G.localizedTracers.splice(t, 1);
+        }
     }
     
-    for (let cache of G.localizedLootCaches) {
-        if (cache.activeState) cache.meshNode.rotation.y += 0.02;
-    }
-}
-
-function executeLootCollectionWorkflow() {
-    if (!G.targetLootInteractivityFocus) return;
-    const activeTargetNode = G.targetLootInteractivityFocus;
-    activeTargetNode.activeState = false;
-    G.scene.remove(activeTargetNode.meshNode);
-    
-    if (activeTargetNode.category === 'health') G.player.hp = Math.min(100, G.player.hp + 45);
-    if (activeTargetNode.category === 'armor') G.player.armor = Math.min(100, G.player.armor + 55);
-    if (activeTargetNode.category === 'ammo') {
-        G.arsenal[G.currentWeaponIndex].reserve += 60;
-    }
-    if (activeTargetNode.category === 'weapon') {
-        const structuralIndexMatch = G.arsenal.findIndex(w => w.name === activeTargetNode.payloadLabel);
-        if (structuralIndexMatch !== -1) switchWeaponSlotIndex(structuralIndexMatch);
-    }
-    
-    appendSystemNotification(`SECURED CACHE CONTENTS: ${activeTargetNode.payloadLabel}`);
-    syncHUDDisplays();
-    syncWeaponDisplayTelemetry();
-}
-
-function executeActiveReloadWorkflow() {
-    const currentWeaponNode = G.arsenal[G.currentWeaponIndex];
-    if (G.isReloading || currentWeaponNode.ammo === currentWeaponNode.magCapacity || currentWeaponNode.reserve <= 0) return;
-    G.isReloading = true;
-    G.activeReloadTimer = currentWeaponNode.reloadTime;
-    syncWeaponDisplayTelemetry();
-}
-
-function switchWeaponSlotIndex(targetIdx) {
-    if (targetIdx < 0 || targetIdx >= G.arsenal.length || G.isReloading) return;
-    G.currentWeaponIndex = targetIdx;
-    triggerOpticsSightsADS(false);
-    syncWeaponDisplayTelemetry();
-}
-
-// ===== RECURSIVE SYNCHRONIZED RENDER PROCESSING FRAME GRAPH =====
-function primaryExecutionPipelineFrame(timestampTimestamp) {
-    G.frameRegistrationID = requestAnimationFrame(primaryExecutionPipelineFrame);
-    
-    const deltaInterval = Math.min((timestampTimestamp - G.executionLastTimestamp) / 1000, 0.04);
-    G.executionLastTimestamp = timestampTimestamp;
-    
-    if (!G.gameStarted || !G.alive) return;
-    
-    computePlayerKinematics(deltaInterval);
-    runAIAgentsProcessingEngine(deltaInterval);
-    processZoneCompressionCycle(deltaInterval);
-    processLootCachesProximityTicking();
-    G.radarTimer = (G.radarTimer || 0) + deltaInterval;
-
-if (G.radarTimer > 0.2) {
-    executeRadarMapRefreshCycle();
-    G.radarTimer = 0;
-}
-    
+    evaluateInteractiveContextualAlerts();
+    renderTacticalMinimapRadarScene();
     G.renderer.render(G.scene, G.camera);
 }
 
-// ===== REALTIME TEXT TELEMETRY PACKET COUPLING UI GENERATIONS =====
-function syncHUDDisplays() {
-    document.getElementById('hp-bar').style.width = G.player.hp + '%';
-    document.getElementById('ap-bar').style.width = G.player.armor + '%';
-    document.getElementById('ep-bar').style.width = G.player.energy + '%';
-    document.getElementById('lbl-hp-val').textContent = Math.round(G.player.hp);
-    document.getElementById('lbl-ap-val').textContent = Math.round(G.player.armor);
+function processAIBotsSimulationLifecycle(deltaSeconds, currentTime) {
+    let aliveCount = 0;
+    
+    G.aiAgents.forEach(bot => {
+        if (!bot.alive) return;
+        aliveCount++;
+        
+        const offsetToPlayerVector = new THREE.Vector3().copy(G.player.position).sub(bot.mesh.position);
+        const distanceToTargetPlayer = offsetToPlayerVector.length();
+        
+        if (currentTime > bot.waypointTimeExpiration) {
+            bot.waypointTimeExpiration = currentTime + 3000 + Math.random() * 4000;
+            bot.targetWaypoint.set(
+                bot.mesh.position.x + (Math.random() - 0.5) * 60,
+                0,
+                bot.mesh.position.z + (Math.random() - 0.5) * 60
+            );
+            bot.stateCycleDirective = (distanceToTargetPlayer < 120 && Math.random() < 0.75) ? 'ENGAGING_PLAYER' : 'RECON_PATROL';
+        }
+        
+        const moveTargetVector = (bot.stateCycleDirective === 'ENGAGING_PLAYER') ? G.player.position : bot.targetWaypoint;
+        const directionalVectorHeading = new THREE.Vector3().copy(moveTargetVector).sub(bot.mesh.position);
+        directionalVectorHeading.y = 0;
+        directionalVectorHeading.normalize();
+        
+        bot.mesh.lookAt(moveTargetVector.x, bot.mesh.position.y, moveTargetVector.z);
+        
+        const aiMovementDeltaSpeed = 4.5 * deltaSeconds;
+        bot.mesh.position.addScaledVector(directionalVectorHeading, aiMovementDeltaSpeed);
+        
+        const bOffset2D = new THREE.Vector2(bot.mesh.position.x, bot.mesh.position.z).distanceTo(G.zoneCenter);
+        if (bOffset2D > G.zoneCurrentRadius) {
+            bot.hp -= deltaSeconds * 12;
+            if (bot.hp <= 0) {
+                bot.alive = false;
+                G.scene.remove(bot.mesh);
+                pushCombatFeedNotification(`GRID DAMAGE INFLICTED ELIMINATION ON BOT #${bot.id}`);
+            }
+        }
+        
+        if (bot.stateCycleDirective === 'ENGAGING_PLAYER' && distanceToTargetPlayer < 95 && bot.alive) {
+            if (currentTime - bot.lastAttackTimeTracker > (bot.attackDelayWindow * 1000)) {
+                bot.lastAttackTimeTracker = currentTime;
+                
+                const randomizedAttackRaycasterDirection = new THREE.Vector3().copy(offsetToPlayerVector).normalize();
+                randomizedAttackRaycasterDirection.x += (Math.random() - 0.5) * bot.accuracyOffsetVariance;
+                randomizedAttackRaycasterDirection.y += (Math.random() - 0.5) * bot.accuracyOffsetVariance;
+                randomizedAttackRaycasterDirection.z += (Math.random() - 0.5) * bot.accuracyOffsetVariance;
+                randomizedAttackRaycasterDirection.normalize();
+                
+                renderLuminousBeamTracer(bot.mesh.position, randomizedAttackRaycasterDirection, 0xff3333);
+                
+                const aiAttackRaycaster = new THREE.Raycaster(bot.mesh.position, randomizedAttackRaycasterDirection, 0, 100);
+                const rayIntersections = aiAttackRaycaster.intersectObjects(G.baseGridMeshes);
+                
+                let solidObstacleRangeDistance = 99999;
+                if (rayIntersections.length > 0) solidObstacleRangeDistance = rayIntersections[0].distance;
+                
+                if (distanceToTargetPlayer < solidObstacleRangeDistance) {
+                    processPlayerDamageImpact(Math.random() * 8 + 5);
+                }
+            }
+        }
+    });
+    
+    document.getElementById('roster-count-val').textContent = aliveCount + 1;
+    if (aliveCount === 0 && G.alive) terminateMatchSimulationGrounds(true);
 }
 
-function syncWeaponDisplayTelemetry() {
-    const currentWeaponNode = G.arsenal[G.currentWeaponIndex];
-    document.getElementById('weapon-active-name').textContent = currentWeaponNode.name;
-    if (G.isReloading) {
-        document.getElementById('weapon-ammo-count').innerHTML = `<span style="color:#ffa502; font-size:13px; font-weight:900;">CYCLING MAG...</span>`;
-    } else {
-        document.getElementById('weapon-ammo-count').innerHTML = `${currentWeaponNode.ammo}<span>/${currentWeaponNode.reserve}</span>`;
+function evaluateInteractiveContextualAlerts() {
+    G.targetLootInteractivityFocus = null;
+    const promptElement = document.getElementById('interaction-alert-prompt');
+    promptElement.style.display = 'none';
+    
+    for (let i = 0; i < G.localizedLootCaches.length; i++) {
+        const cache = G.localizedLootCaches[i];
+        if (cache.spent) continue;
+        
+        if (G.player.position.distanceTo(cache.mesh.position) < 6.0) {
+            G.targetLootInteractivityFocus = cache;
+            promptElement.textContent = `TOUCH / PRESS 'F' TO SECURE ${cache.contentsRevealedLabel}`;
+            promptElement.style.display = 'block';
+            break;
+        }
     }
 }
 
-function appendKillfeedMessage(str) {
-    const feedContainer = document.getElementById('combat-feed');
-    const structureDiv = document.createElement('div');
-    structureDiv.className = 'feed-card';
-    structureDiv.textContent = str;
-    feedContainer.insertBefore(structureDiv, feedContainer.firstChild);
-    setTimeout(() => structureDiv.remove(), 4500);
+function renderTacticalMinimapRadarScene() {
+    const context = G.interfaceMapRadarCtx;
+    context.clearRect(0, 0, 280, 280);
+    context.fillStyle = '#0a0f1d';
+    context.fillRect(0, 0, 280, 280);
+    
+    const scalingFactor = 280 / (G.mapSizeExtent * 2);
+    const centerPointX = 140 + (G.zoneCenter.x - G.player.position.x) * scalingFactor;
+    const centerPointY = 140 - (G.zoneCenter.y - G.player.position.z) * scalingFactor;
+    
+    context.beginPath();
+    context.arc(centerPointX, centerPointY, G.zoneCurrentRadius * scalingFactor, 0, Math.PI * 2);
+    context.strokeStyle = '#ff4757';
+    context.lineWidth = 2;
+    context.stroke();
+    
+    G.localizedLootCaches.forEach(cache => {
+        if (cache.spent) return;
+        const lx = 140 + (cache.mesh.position.x - G.player.position.x) * scalingFactor;
+        const ly = 140 - (cache.mesh.position.z - G.player.position.z) * scalingFactor;
+        context.fillStyle = '#ffa500';
+        context.fillRect(lx - 2, ly - 2, 4, 4);
+    });
+    
+    G.aiAgents.forEach(bot => {
+        if (!bot.alive) return;
+        const bx = 140 + (bot.mesh.position.x - G.player.position.x) * scalingFactor;
+        const bz = 140 - (bot.mesh.position.z - G.player.position.z) * scalingFactor;
+        context.beginPath();
+        context.arc(bx, bz, 3, 0, Math.PI * 2);
+        context.fillStyle = '#ff4757';
+        context.fill();
+    });
+    
+    context.beginPath();
+    context.arc(140, 140, 4, 0, Math.PI * 2);
+    context.fillStyle = '#00ffcc';
+    context.fill();
 }
 
-function appendSystemNotification(str) {
-    appendKillfeedMessage(str);
-}
-
-function evaluateVictoryConditions() {
-    if (G.aiAgents.filter(b => b.activeAlive).length === 0) {
-        executeSimulationTerminationSequence(true);
+// Fixed core bootstrap: opens the match overlays and fixes CSS pointer restrictions via JS
+function bootBattleSimulation() {
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('hud').style.display = 'block';
+    
+    // Core visibility fix: forces layout displaying and enables interaction inputs programmatically
+    const controllerHUD = document.getElementById('mobile-controls');
+    if (controllerHUD) {
+        controllerHUD.style.display = 'block';
+        controllerHUD.style.pointerEvents = 'auto'; 
     }
+    
+    if (!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        G.renderer.domElement.requestPointerLock();
+    }
+    
+    G.gameStarted = true;
+    G.executionStartTime = performance.now();
+    setupTacticalInputBinds();
+    
+    syncHUDDisplays();
+    syncWeaponDisplayTelemetry();
+    
+    G.clock.getDelta();
+    requestAnimationFrame(primaryExecutionPipelineFrame);
 }
 
-function executeSimulationTerminationSequence(winOutcomeCode) {
+function revealSettingsDeck() { document.getElementById('settings-panel').style.display = 'block'; }
+function concealSettingsDeck() { document.getElementById('settings-panel').style.display = 'none'; }
+
+function terminateMatchSimulationGrounds(winConditionAchieved) {
     G.alive = false;
+    cancelAnimationFrame(G.frameRegistrationID);
+    
+    document.exitPointerLock = document.exitPointerLock || document.mozExitPointerLock;
     if (document.exitPointerLock) document.exitPointerLock();
     
-    const endingPanel = document.getElementById('match-ended-screen');
-    endingPanel.style.display = 'flex';
+    document.getElementById('hud').style.display = 'none';
+    document.getElementById('mobile-controls').style.display = 'none';
     
-    const headingLabel = document.getElementById('match-ended-title');
-    const rankingLabel = document.getElementById('match-rank-placement');
+    const finishScreen = document.getElementById('match-ended-screen');
+    const titleElement = document.getElementById('match-ended-title');
+    const rankElement = document.getElementById('match-rank-placement');
+    finishScreen.style.display = 'flex';
     
-    if (winOutcomeCode) {
-        headingLabel.textContent = 'VICTORY ROYALE';
-        headingLabel.className = 'victory-text';
-        rankingLabel.textContent = 'DEPLOYMENT STATUS: OPERATOR SURVIVED (#1)';
+    if (winConditionAchieved) {
+        titleElement.textContent = "🏆 VICTORY DETERMINED 🏆";
+        titleElement.className = "victory-text";
+        rankElement.textContent = "RANKING POSITION PLACEMENT STATUS: #01 / WINNER";
     } else {
-        headingLabel.textContent = 'COMBATANT KILLED IN ACTION';
-        headingLabel.className = 'defeat-text';
-        const placementStatusValue = G.aiAgents.filter(b => b.activeAlive).length + 1;
-        rankingLabel.textContent = `DEPLOYMENT STATUS: RANK POSITION #${placementStatusValue}`;
+        titleElement.textContent = "💀 AGENT ELIMINATED 💀";
+        titleElement.className = "defeat-text";
+        const standingRemainingCount = G.aiAgents.filter(b => b.alive).length + 1;
+        rankElement.textContent = `RANKING POSITION PLACEMENT STATUS: #${standingRemainingCount}`;
     }
+    
+    const minutesElapsed = Math.floor((performance.now() - G.executionStartTime) / 60000);
+    const secondsElapsed = Math.floor(((performance.now() - G.executionStartTime) % 60000) / 1000);
     
     document.getElementById('res-kills').textContent = G.killStreakCounter;
     document.getElementById('res-damage').textContent = G.operationalDamageTotal;
+    document.getElementById('res-survival').textContent = `${minutesElapsed}:${secondsElapsed < 10 ? '0' : ''}${secondsElapsed}`;
     
-    const activeDeploymentDuration = Math.floor((performance.now() - G.executionStartTime) / 1000);
-    document.getElementById('res-survival').textContent = `${Math.floor(activeDeploymentDuration/60)}:${String(activeDeploymentDuration%60).padStart(2,'0')}`;
-    
-    const structuralAccuracyCalculation = G.statisticalShotsFired > 0 ? Math.round((G.statisticalShotsLanded / G.statisticalShotsFired) * 100) : 0;
-    document.getElementById('res-accuracy').textContent = structuralAccuracyCalculation + '%';
-    
-    document.getElementById('hud').style.display = 'none';
-    cancelAnimationFrame(G.frameRegistrationID);
+    const ratioVal = G.statisticalShotsFired > 0 ? Math.round((G.statisticalShotsLanded / G.statisticalShotsFired) * 100) : 0;
+    document.getElementById('res-accuracy').textContent = `${ratioVal}%`;
 }
 
-function revealSettingsDeck() {
-    document.getElementById('menu').style.display = 'none';
-    document.getElementById('settings-panel').style.display = 'block';
-}
-
-function concealSettingsDeck() {
-    document.getElementById('settings-panel').style.display = 'none';
-    document.getElementById('menu').style.display = 'flex';
-}
-
-function bootBattleSimulation() {
-    document.getElementById('menu').style.display = 'none';
-    document.getElementById('loading-screen').style.display = 'flex';
-    
+function triggerPhaseExecution(directiveIdx) {
     const pipelineDirectives = [
-        'ALL RESIDUAL DATA FLUSHED...', 'CONSTRUCTING MULTI-FLOOR ARCHITECTURAL SECTORS...',
-        'DEPLOYING TACTICAL COMBAT AI MESHES...', 'STREAMING COMBAT INTELLIGENCE ARRAYS...'
+        "Synchronizing Structural Vectors Matrix...",
+        "Assembling Tactical Architectural Nodes...",
+        "Populating Artificial Combatants Arrays...",
+        "Calibrating Atmospheric Rendering Buffers...",
+        "Simulation Ground Core Boot Execution Complete."
     ];
     
-    function triggerPhaseExecution(directiveIdx) {
-        if (directiveIdx >= pipelineDirectives.length) {
-            document.getElementById('loading-screen').style.display = 'none';
-            document.getElementById('hud').style.display = 'block';
-            G.gameStarted = true;
-            G.executionStartTime = G.executionLastTimestamp = performance.now();
-            
-            if (!/Mobi|Android/i.test(navigator.userAgent) && G.renderer.domElement.requestPointerLock) {
-                G.renderer.domElement.requestPointerLock();
-            }
-            
-            syncHUDDisplays();
-            syncWeaponDisplayTelemetry();
-            requestAnimationFrame(primaryExecutionPipelineFrame);
-            return;
-        }
-        
-        document.getElementById('loading-status-text').textContent = pipelineDirectives[directiveIdx];
-        document.getElementById('loading-progressbar-fill').style.width = ((directiveIdx + 1) / pipelineDirectives.length * 100) + '%';
-        
-        if (directiveIdx === 0) buildTacticalSimulationWorld();
-        if (directiveIdx === 2) constructAIAgentBots();
-        
-        setTimeout(() => triggerPhaseExecution(directiveIdx + 1), 400);
+    if (directiveIdx >= pipelineDirectives.length) {
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('menu').style.display = 'flex';
+        G.renderer.render(G.scene, G.camera);
+        return;
     }
     
-    setTimeout(() => triggerPhaseExecution(0), 100);
+    document.getElementById('loading-status-text').textContent = pipelineDirectives[directiveIdx];
+    document.getElementById('loading-progressbar-fill').style.width = ((directiveIdx + 1) / pipelineDirectives.length * 100) + '%';
+    
+    if (directiveIdx === 0) buildTacticalSimulationWorld();
+    if (directiveIdx === 2) constructAIAgentBots();
+    
+    setTimeout(() => triggerPhaseExecution(directiveIdx + 1), 400);
 }
+
+setTimeout(() => triggerPhaseExecution(0), 100);
 
 function triggerArenaReboot() {
     cancelAnimationFrame(G.frameRegistrationID);
     location.reload();
 }
 
-// ===== SYSTEM MASTER RUNTIME STRAP BOOT ENGINE =====
 function executeGraphicsResizeResolution() {
     G.camera.aspect = window.innerWidth / window.innerHeight;
     G.camera.updateProjectionMatrix();
@@ -1988,15 +1787,12 @@ function executeGraphicsResizeResolution() {
 }
 
 async function primaryArenaBootLoader() {
-       
     document.getElementById('loading-screen').style.display = 'none';
     document.getElementById('menu').style.display = 'flex';
     G.renderer.render(G.scene, G.camera);
 }
 
 window.onload = primaryArenaBootLoader;
-
-
 </script>
 </body>
 </html>
